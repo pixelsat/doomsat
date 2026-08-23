@@ -1,0 +1,7 @@
+option(
+  'video_backend',
+  type: 'combo',
+  choices: ['xlib'],
+  value: 'xlib',
+  description: 'Video/input backend. Placeholder until the renderer is replaced by the state serializer.',
+)

@@ -6,8 +6,6 @@
 *.user
 *~
 .vs/
-Debug/
-Release/
-Build/
-/doomgeneric/doomgeneric
-/doomgeneric/doomgeneric.map
+
+# meson build directories
+/build*/
