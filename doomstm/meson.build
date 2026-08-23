@@ -96,22 +96,12 @@ doom_core = files(
   'z_zone.c',
 )
 
-backend = get_option('video_backend')
-
 doom_args = [
   '-DNORMALUNIX',
   '-DLINUX',
   '-DSNDSERV',
   '-D_DEFAULT_SOURCE',
 ]
-
-doom_deps = [cc.find_library('m', required: false)]
-backend_sources = []
-
-if backend == 'xlib'
-  backend_sources += files('doomgeneric_xlib.c')
-  doom_deps += dependency('x11')
-endif
 
 doom_args += cc.get_supported_arguments(
   '-Wno-unused-variable',
@@ -124,11 +114,9 @@ doom_args += cc.get_supported_arguments(
   '-Wno-implicit-fallthrough',
 )
 
-executable(
+static_library(
   'doomstm',
-  doom_core + backend_sources,
+  doom_core,
   c_args: doom_args,
-  dependencies: doom_deps,
-  link_args: ['-Wl,--gc-sections'],
   install: false,
 )
