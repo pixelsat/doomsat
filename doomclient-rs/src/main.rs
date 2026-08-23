@@ -1,7 +1,7 @@
 mod doomclient;
 
 use std::{
-    ffi::{CStr, c_char}, fs, path::PathBuf, slice, thread, time::{Duration, Instant},
+    path::PathBuf
 };
 
 fn main() {
@@ -10,6 +10,11 @@ fn main() {
         "doomclient".to_owned(),
         "-iwad".to_owned(),
         wad.to_string_lossy().into_owned(),
+        "-skill".to_owned(),
+        "5".to_owned(),
+        "-warp".to_owned(),
+        "1".to_owned(),
+        "9".to_owned(),
     ]);
 
     loop {
