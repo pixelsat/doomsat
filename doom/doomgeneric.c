@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "doomstat.h"
 #include "m_argv.h"
 
 #include "doomgeneric.h"

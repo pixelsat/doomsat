@@ -1,18 +1,22 @@
 #include "doomsat.h"
 #include "doomstat.h"
+#include "i_system.h"
 #include "info.h"
 #include "p_local.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
 #include "r_defs.h"
+#include "r_main.h"
+#include "r_state.h"
 #include "z_zone.h"
 #include <stdio.h>
 #include <string.h>
 
-struct doomsat_thing
+#ifdef DOOMSAT_DOOMSTM
+struct doomsat_mobj
 doomsat_wire_thing (mobj_t *mobj)
 {
-    struct doomsat_thing thing;
+    struct doomsat_mobj thing;
     thing.x = mobj->x;
     thing.y = mobj->y;
     thing.z = mobj->z;
@@ -21,7 +25,7 @@ doomsat_wire_thing (mobj_t *mobj)
     thing.flags = mobj->flags;
     return thing;
 }
-struct doomsat_thing *thinkercap_array = NULL;
+struct doomsat_mobj *mobj_array = NULL;
 
 struct doomsat_sector
 doomsat_wire_sector (sector_t sector)
@@ -53,10 +57,6 @@ struct doomsat_line
 doomsat_wire_line (line_t line)
 {
     struct doomsat_line result;
-    result.v1x = line.v1->x;
-    result.v1y = line.v1->y;
-    result.v2x = line.v2->x;
-    result.v2y = line.v2->y;
     result.flags = line.flags;
     return result;
 }
@@ -68,7 +68,10 @@ doomsat_wire_psprite (pspdef_t psprite)
     struct doomsat_psprite result;
     result.sx = psprite.sx;
     result.sy = psprite.sy;
-    result.state = psprite.state - states;
+    if (psprite.state != NULL)
+        result.state = -1;
+    else
+        result.state = psprite.state - states;
     return result;
 }
 struct doomsat_psprite *psprite_array = NULL;
@@ -88,14 +91,14 @@ doomsat_State (void)
                 }
         }
 
-    if (thinkercap_array != NULL)
+    if (mobj_array != NULL)
         {
-            Z_Free (thinkercap_array);
-            thinkercap_array = NULL;
+            Z_Free (mobj_array);
+            mobj_array = NULL;
         }
-    thinkercap_array = Z_Malloc (sizeof (struct doomsat_thing) * num_thinkers,
-                                 PU_STATIC, &thinkercap_array);
-    struct doomsat_thing *thing_arr_ptr = thinkercap_array;
+    mobj_array = Z_Malloc (sizeof (struct doomsat_mobj) * num_thinkers,
+                           PU_STATIC, &mobj_array);
+    struct doomsat_mobj *thing_arr_ptr = mobj_array;
     for (struct thinker_s *ptr = thinkercap.next; ptr != thinkercap_original;
          ptr = ptr->next)
         {
@@ -204,7 +207,144 @@ doomsat_State (void)
                 = doomsat_wire_psprite (player->psprites[i]);
         }
 
-    state.thinkercap_length = num_thinkers;
-    state.thinkercap = thinkercap_array;
+    state.mobj_length = num_thinkers;
+    state.mobjs = mobj_array;
     return state;
 }
+#endif
+
+#ifdef DOOMSAT_DOOMCLIENT
+mobj_t *mobj_storage = NULL;
+
+void
+doomsat_LoadState (struct doomsat_state state)
+{
+    gamestate = state.gamestate;
+    gametic = state.gametic;
+    leveltime = state.leveltime;
+    paused = state.paused;
+    automapactive = state.automapactive;
+    menuactive = state.menuactive;
+
+    viewx = state.viewx;
+    viewy = state.viewy;
+    viewz = state.viewz;
+    viewangle = state.viewangle;
+
+    player_t *player = &players[displayplayer];
+    player->viewz = state.player_viewz;
+    player->extralight = state.player_extralight;
+    player->fixedcolormap = state.player_fixedcolormap;
+
+    player->health = state.player_health;
+    player->armorpoints = state.player_armorpoints;
+    memcpy (player->ammo, state.player_ammo, sizeof (state.player_ammo));
+    memcpy (player->maxammo, state.player_maxammo,
+            sizeof (state.player_maxammo));
+    player->readyweapon = state.player_readyweapon;
+    memcpy (player->weaponowned, state.player_weaponowned,
+            sizeof (state.player_weaponowned));
+    memcpy (player->cards, state.player_cards, sizeof (state.player_cards));
+    memcpy (player->frags, state.player_frags, sizeof (state.player_frags));
+    memcpy (player->powers, state.player_powers, sizeof (state.player_powers));
+    player->message = "message"; // TODO: implement properly
+
+    numsectors = state.sectors_length;
+    if (state.sectors_length != numsectors)
+        I_Error ("sector count mismatch");
+
+    for (int i = 0; i < numsectors; ++i)
+        {
+            const struct doomsat_sector *src = &state.sectors[i];
+            sector_t *dst = &sectors[i];
+
+            dst->floorheight = src->floorheight;
+            dst->ceilingheight = src->ceilingheight;
+            dst->floorpic = src->floorpic;
+            dst->ceilingpic = src->ceilingpic;
+            dst->lightlevel = src->lightlevel;
+
+            dst->thinglist = NULL;
+        }
+
+    if (state.sides_length != numsides)
+        {
+            I_Error ("side count mismatch");
+        }
+
+    for (int i = 0; i < numsides; ++i)
+        {
+            const struct doomsat_side *src = &state.sides[i];
+            side_t *dst = &sides[i];
+
+            dst->textureoffset = src->textureoffset;
+            dst->rowoffset = src->rowoffset;
+            dst->toptexture = src->toptexture;
+            dst->bottomtexture = src->bottomtexture;
+            dst->midtexture = src->midtexture;
+        }
+
+    if (state.lines_length != numlines)
+        {
+            I_Error ("line count mismatch");
+        }
+
+    for (int i = 0; i < numlines; ++i)
+        {
+            lines[numlines].flags = state.lines[i].flags;
+        }
+
+    for (int i = 0; i < NUMPSPRITES; ++i)
+        {
+            const struct doomsat_psprite *src = &state.player_psprites[i];
+            pspdef_t *dst = &player->psprites[i];
+
+            dst->sx = src->sx;
+            dst->sy = src->sy;
+
+            if (src->state == -1)
+                dst->state = NULL;
+            else if (src->state < NUMSTATES)
+                dst->state = &states[src->state];
+            else
+                I_Error ("invalid psprite state");
+        }
+
+    for (int i = 0; i < numsectors; ++i)
+        {
+            sectors[i].thinglist = NULL;
+        }
+
+    if (mobj_storage)
+        {
+            Z_Free (mobj_storage);
+            mobj_storage = NULL;
+        }
+    mobj_storage = Z_Malloc (sizeof (struct doomsat_mobj) * state.mobj_length,
+                             PU_STATIC, mobj_storage);
+
+    for (int i = 0; i < state.mobj_length; ++i)
+        {
+            const struct doomsat_mobj *src = &state.mobjs[i];
+
+            mobj_t *mo = &mobj_storage[i];
+            mo->x = src->x;
+            mo->y = src->y;
+            mo->z = src->z;
+            mo->angle = src->angle;
+            mo->frame = src->frame;
+            mo->flags = src->flags;
+
+            mo->subsector = R_PointInSubsector (mo->x, mo->y);
+
+            sector_t *sector = mo->subsector->sector;
+            mo->snext = sector->thinglist;
+            mo->sprev = NULL;
+
+            if (mo->snext != NULL)
+                mo->snext->sprev = mo;
+
+            sector->thinglist = mo;
+        }
+}
+#endif

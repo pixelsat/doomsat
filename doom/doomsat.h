@@ -1,11 +1,19 @@
 #ifndef DOOMSAT
 #define DOOMSAT
 
+// the two main macros which doomsat uses are
+// 1. DOOMSAT_DOOMSTM
+// 2. DOOMSAT_DOOMCLIENT
+// will eventually port this to use meson
+
+#define DOOMSAT_DOOMSTM
+#define DOOMSAT_DOOMCLIENT
+
 #include "doomdef.h"
 #include "p_pspr.h"
 #include <stdint.h>
 
-struct doomsat_thing
+struct doomsat_mobj
 {
     int x;
     int y;
@@ -35,10 +43,6 @@ struct doomsat_side
 
 struct doomsat_line
 {
-    int v1x;
-    int v1y;
-    int v2x;
-    int v2y;
     short flags;
 };
 
@@ -74,6 +78,7 @@ struct doomsat_state
     boolean player_weaponowned[NUMWEAPONS];
     boolean player_cards[NUMCARDS];
     int player_frags[MAXPLAYERS];
+    int player_powers[NUMPOWERS];
     int player_message; // TODO: is actually a string, need to figure out how to represetn
 
     struct doomsat_psprite player_psprites[NUMPSPRITES];
@@ -87,10 +92,16 @@ struct doomsat_state
     int lines_length;
     const struct doomsat_line *lines;
 
-    int thinkercap_length;
-    const struct doomsat_thing *thinkercap;
+    int mobj_length;
+    const struct doomsat_mobj *mobjs;
 };
 
-struct doomsat_state doomsat_State (void);
+#ifdef DOOMSAT_DOOMSTM
+struct doomsat_state doomsat_GetState (void);
+#endif
+
+#ifdef DOOMSAT_DOOMCLIENT
+void doomsat_LoadState (struct doomsat_state state);
+#endif
 
 #endif

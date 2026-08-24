@@ -111,7 +111,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "doomclient-rs"
+name = "doomsat"
 version = "0.1.0"
 dependencies = [
  "bindgen",

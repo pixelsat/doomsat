@@ -1,3 +1,7 @@
+## various todos
+
+* add logging via callbacks
+
 # doomsat
 
 doomsat is an attempt to run an extremely limited port of DOOM on the Pixelsat I satellite based on [doomgeneric](https://github.com/ozkl/doomgeneric).  
