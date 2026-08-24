@@ -1,7 +1,0 @@
-option(
-  'video_backend',
-  type: 'combo',
-  choices: ['sdl', 'xlib'],
-  value: 'sdl',
-  description: 'Video/input backend used to present received game state.',
-)
