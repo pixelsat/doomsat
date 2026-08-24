@@ -1,58 +1,14 @@
-use std::ffi::{self, CString, c_char, c_int};
+use std::ffi::{CString, c_char, c_int};
 
-#[repr(C)]
-struct doomsat_thing {
-    x: ffi::c_int,
-    y: ffi::c_int,
-    z: ffi::c_int,
-    angle: u32,
-    frame: ffi::c_int,
-    flags: ffi::c_int,
-}
-#[repr(C)]
-struct doomsat_sector {
-    floorheight: ffi::c_int,
-    ceilingheight: ffi::c_int,
-    floorpic: ffi::c_short,
-    ceilingpic: ffi::c_short,
-    lightlevel: ffi::c_short,
-}
-#[repr(C)]
-struct doomsat_side {
-    textureoffset: ffi::c_int,
-    rowoffset: ffi::c_int,
-    toptexture: ffi::c_short,
-    bottomtexture: ffi::c_short,
-    midtexture: ffi::c_short,
-}
-#[repr(C)]
-struct doomsat_line {
-    v1x: ffi::c_int,
-    v1y: ffi::c_int,
-    v2x: ffi::c_int,
-    v2y: ffi::c_int,
-    flags: ffi::c_short,
-}
-#[repr(C)]
-struct doomsat_state {
-    viewx: ffi::c_int,
-    viewy: ffi::c_int,
-    viewz: ffi::c_int,
-    viewangle: u32,
-    player_viewz: ffi::c_int,
-    player_extralight: ffi::c_int,
-    player_fixedcolormap: ffi::c_int,
-    sectors_length: ffi::c_int,
-    sectors: *const doomsat_sector,
-    sides_length: ffi::c_int,
-    sides: *const doomsat_side,
-    lines_length: ffi::c_int,
-    lines: *const doomsat_line,
-    thinkercap_length: ffi::c_int,
-    thinkercap: *const doomsat_thing,
+#[expect(
+    non_camel_case_types,
+    reason = "bindgen"
+)]
+mod bindings {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-mod doomclient_unsafe {
+mod doomclient_sys {
     use std::{
         cell::RefCell,
         collections::VecDeque,
@@ -185,14 +141,6 @@ mod doomclient_unsafe {
         })
     }
 
-    unsafe extern "C" {
-        pub fn doomgeneric_Create(argc: c_int, argv: *mut *mut c_char);
-        pub fn doomgeneric_Tick();
-        pub fn doomsat_State() -> super::doomsat_state;
-
-        static mut DG_ScreenBuffer: *mut u32;
-    }
-
     #[unsafe(no_mangle)]
     pub extern "C" fn DG_Init() {
         INIT_TIME.set(Instant::now()).ok();
@@ -206,10 +154,10 @@ mod doomclient_unsafe {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn DG_DrawFrame() {
-        let state = unsafe { doomsat_State() };
-        dbg!(state.lines_length);
+        let state = unsafe { super::bindings::doomsat_State() };
+        dbg!(state.gametic);
 
-        let pixels = unsafe { slice::from_raw_parts(DG_ScreenBuffer, 320 * 200) };
+        let pixels = unsafe { slice::from_raw_parts(super::bindings::DG_ScreenBuffer, 320 * 200) };
 
         WINDOW.with(|window| {
             window
@@ -272,7 +220,7 @@ pub fn create(args: &[String]) {
         .collect::<Vec<_>>();
 
     unsafe {
-        doomclient_unsafe::doomgeneric_Create(argv_ptrs.len() as c_int, argv_ptrs.as_mut_ptr())
+        bindings::doomgeneric_Create(argv_ptrs.len() as c_int, argv_ptrs.as_mut_ptr())
     };
 
     std::mem::forget(argv);
@@ -280,5 +228,5 @@ pub fn create(args: &[String]) {
 }
 
 pub fn tick() {
-    unsafe { doomclient_unsafe::doomgeneric_Tick() };
+    unsafe { bindings::doomgeneric_Tick() };
 }

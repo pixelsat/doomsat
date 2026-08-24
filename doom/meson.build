@@ -24,6 +24,7 @@ doom_core = files(
   'd_net.c',
   'doomdef.c',
   'doomgeneric.c',
+  'doomsat.c',
   'doomstat.c',
   'dstrings.c',
   'dummy.c',
