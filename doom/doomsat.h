@@ -19,6 +19,7 @@ struct doomsat_mobj
     int y;
     int z;
     uint32_t angle;
+    int sprite;
     int frame;
     int flags;
 };
@@ -101,7 +102,7 @@ struct doomsat_state doomsat_GetState (void);
 #endif
 
 #ifdef DOOMSAT_DOOMCLIENT
-void doomsat_LoadState (struct doomsat_state state);
+void doomsat_Draw (struct doomsat_state state);
 #endif
 
 #endif

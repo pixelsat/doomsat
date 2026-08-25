@@ -1,155 +1,131 @@
-use doomsat::doom::{Doom, DoomCallbacks};
-use minifb::{InputCallback, Key, Window, WindowOptions};
+use crossterm::{
+    event::{
+        Event, KeyCode, KeyEventKind, KeyModifiers, KeyboardEnhancementFlags,
+        PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags, poll, read,
+    },
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
+use doomsat::doom::{Doom, DoomCallbacks, serialize_state};
 use std::{
-    collections::VecDeque,
+    collections::HashMap,
+    io::{Write, stdout},
+    os::unix::net::UnixStream,
     path::PathBuf,
     sync::mpsc::{self, Receiver, Sender},
-    time::Instant,
+    thread,
+    time::{Duration, Instant},
 };
+
+// Without the kitty keyboard protocol terminals never send key-up, so a key
+// counts as released once it stops auto-repeating for this long.
+const RELEASE_TIMEOUT: Duration = Duration::from_millis(150);
 
 struct DoomClient {
     initial_time: Instant,
-    window: Window,
     key_queue: Receiver<(bool, u8)>,
 }
-struct DoomInput {
-    key_events: Sender<(bool, u8)>,
-}
-impl InputCallback for DoomInput {
-    fn add_char(&mut self, _character: u32) {}
 
-    fn set_key_state(&mut self, key: Key, pressed: bool) {
-        if let Some(key) = doom_key(key) {
-            let _ = self.key_events.send((pressed, key));
+fn input_thread(tx: Sender<(bool, u8)>) {
+    let mut held: HashMap<u8, Instant> = HashMap::new();
+    loop {
+        if poll(Duration::from_millis(10)).unwrap_or(false) {
+            if let Ok(Event::Key(ev)) = read() {
+                if ev.code == KeyCode::Char('c') && ev.modifiers.contains(KeyModifiers::CONTROL) {
+                    cleanup();
+                    std::process::exit(0);
+                }
+                let key = if ev.modifiers.contains(KeyModifiers::CONTROL) {
+                    0xa2 // use
+                } else if let Some(key) = doom_key(ev.code) {
+                    key
+                } else {
+                    continue;
+                };
+                match ev.kind {
+                    KeyEventKind::Release => {
+                        held.remove(&key);
+                        let _ = tx.send((false, key));
+                    }
+                    _ => {
+                        if held.insert(key, Instant::now()).is_none() {
+                            let _ = tx.send((true, key));
+                        }
+                    }
+                }
+            }
         }
+        let now = Instant::now();
+        held.retain(|&key, last| {
+            let alive = now.duration_since(*last) < RELEASE_TIMEOUT;
+            if !alive {
+                let _ = tx.send((false, key));
+            }
+            alive
+        });
     }
 }
+
+fn cleanup() {
+    let _ = execute!(stdout(), PopKeyboardEnhancementFlags);
+    let _ = disable_raw_mode();
+}
+
 impl DoomCallbacks for DoomClient {
     fn new() -> Self {
-        let (key_events, key_queue) = mpsc::channel();
-
-        let mut window = Window::new("Doom", 320, 200, WindowOptions::default())
-            .expect("failed to create window");
-        window.set_input_callback(Box::new(DoomInput { key_events }));
+        enable_raw_mode().expect("failed to enable raw mode");
+        let _ = execute!(
+            stdout(),
+            PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_EVENT_TYPES)
+        );
+        let (tx, key_queue) = mpsc::channel();
+        thread::spawn(move || input_thread(tx));
         DoomClient {
             initial_time: Instant::now(),
-            window,
             key_queue,
         }
     }
-    fn on_draw(&mut self, buf: &[u32; 320 * 200]) {
-        self.window.update_with_buffer(buf, 320, 200).unwrap();
-    }
+    fn on_draw(&mut self, _buf: &[u32; 320 * 200]) {}
     fn get_key_event(&mut self) -> Option<(bool, u8)> {
         self.key_queue.try_recv().ok()
     }
     fn sleep(&mut self, ms: u32) {
-        std::thread::sleep(std::time::Duration::from_millis(ms.into()));
+        thread::sleep(Duration::from_millis(ms.into()));
     }
     fn init(&mut self) {}
     fn set_window_title(&mut self, _title: &str) {}
-    fn get_elapsed(&mut self) -> core::time::Duration {
+    fn get_elapsed(&mut self) -> Duration {
         self.initial_time.elapsed()
     }
 }
 
-fn doom_key(key: Key) -> Option<u8> {
-    Some(match key {
-        Key::A => b'a',
-        Key::B => b'b',
-        Key::C => b'c',
-        Key::D => b'd',
-        Key::E => b'e',
-        Key::F => b'f',
-        Key::G => b'g',
-        Key::H => b'h',
-        Key::I => b'i',
-        Key::J => b'j',
-        Key::K => b'k',
-        Key::L => b'l',
-        Key::M => b'm',
-        Key::N => b'n',
-        Key::O => b'o',
-        Key::P => b'p',
-        Key::Q => b'q',
-        Key::R => b'r',
-        Key::S => b's',
-        Key::T => b't',
-        Key::U => b'u',
-        Key::V => b'v',
-        Key::W => b'w',
-        Key::X => b'x',
-        Key::Y => b'y',
-        Key::Z => b'z',
-        Key::Key0 => b'0',
-        Key::Key1 => b'1',
-        Key::Key2 => b'2',
-        Key::Key3 => b'3',
-        Key::Key4 => b'4',
-        Key::Key5 => b'5',
-        Key::Key6 => b'6',
-        Key::Key7 => b'7',
-        Key::Key8 => b'8',
-        Key::Key9 => b'9',
-        Key::Right => 0xae,
-        Key::Left => 0xac,
-        Key::Up => 0xad,
-        Key::Down => 0xaf,
-        Key::Comma => 0xa0,
-        Key::Period => 0xa1,
-        Key::Space => 0xa3,
-        // ...ok i switched ctrl & space bc... cmon
-        Key::LeftCtrl | Key::RightCtrl => 0xa2,
-        Key::Escape => 27,
-        Key::Enter | Key::NumPadEnter => 13,
-        Key::Tab => 9,
-        Key::F1 => 0xbb,
-        Key::F2 => 0xbc,
-        Key::F3 => 0xbd,
-        Key::F4 => 0xbe,
-        Key::F5 => 0xbf,
-        Key::F6 => 0xc0,
-        Key::F7 => 0xc1,
-        Key::F8 => 0xc2,
-        Key::F9 => 0xc3,
-        Key::F10 => 0xc4,
-        Key::F11 => 0xd7,
-        Key::F12 => 0xd8,
-        Key::Backspace => 0x7f,
-        Key::Pause => 0xff,
-        Key::Equal => b'=',
-        Key::Minus => b'-',
-        Key::LeftShift | Key::RightShift => 0xb6,
-        Key::LeftAlt | Key::RightAlt => 0xb8,
-        Key::CapsLock => 0xba,
-        Key::NumLock => 0xc5,
-        Key::ScrollLock => 0xc6,
-        Key::Home => 0xc7,
-        Key::End => 0xcf,
-        Key::PageUp => 0xc9,
-        Key::PageDown => 0xd1,
-        Key::Insert => 0xd2,
-        Key::Delete => 0xd3,
-        Key::Apostrophe => b'\'',
-        Key::Backquote => b'`',
-        Key::Backslash => b'\\',
-        Key::LeftBracket => b'[',
-        Key::RightBracket => b']',
-        Key::Semicolon => b';',
-        Key::Slash | Key::NumPadSlash => b'/',
-        Key::NumPadAsterisk => b'*',
-        Key::NumPadMinus => b'-',
-        Key::NumPadPlus => b'+',
-        Key::NumPad0 | Key::NumPadDot => 0,
-        Key::NumPad1 => 0xcf,
-        Key::NumPad2 => 0xaf,
-        Key::NumPad3 => 0xd1,
-        Key::NumPad4 => 0xac,
-        Key::NumPad5 => b'5',
-        Key::NumPad6 => 0xae,
-        Key::NumPad7 => 0xc7,
-        Key::NumPad8 => 0xad,
-        Key::NumPad9 => 0xc9,
+fn doom_key(code: KeyCode) -> Option<u8> {
+    Some(match code {
+        KeyCode::Char(c) if c.is_ascii() => {
+            let c = c.to_ascii_lowercase() as u8;
+            if c == b' ' { 0xa3 } else { c } // space fires
+        }
+        KeyCode::Right => 0xae,
+        KeyCode::Left => 0xac,
+        KeyCode::Up => 0xad,
+        KeyCode::Down => 0xaf,
+        KeyCode::Esc => 27,
+        KeyCode::Enter => 13,
+        KeyCode::Tab => 9,
+        KeyCode::Backspace => 0x7f,
+        KeyCode::Home => 0xc7,
+        KeyCode::End => 0xcf,
+        KeyCode::PageUp => 0xc9,
+        KeyCode::PageDown => 0xd1,
+        KeyCode::Insert => 0xd2,
+        KeyCode::Delete => 0xd3,
+        KeyCode::Pause => 0xff,
+        KeyCode::CapsLock => 0xba,
+        KeyCode::NumLock => 0xc5,
+        KeyCode::ScrollLock => 0xc6,
+        KeyCode::F(n @ 1..=10) => 0xbb + (n - 1),
+        KeyCode::F(11) => 0xd7,
+        KeyCode::F(12) => 0xd8,
         _ => return None,
     })
 }
@@ -171,7 +147,14 @@ fn main() {
             "9".to_owned(),
         ],
     );
+    let mut sock = UnixStream::connect("/tmp/doomsat_state.sock")
+        .expect("failed to connect to Doom state receiver");
     loop {
         doom.tick();
+        let state = doom.get_state();
+        let bytes = serialize_state(&state).expect("failed to serialize Doom state");
+        let len = u64::try_from(bytes.len()).expect("Doom state is too large");
+        sock.write_all(&len.to_le_bytes()).unwrap();
+        sock.write_all(&bytes).unwrap();
     }
 }

@@ -1,5 +1,6 @@
 #include "doomsat.h"
 #include "doomstat.h"
+#include "hu_stuff.h"
 #include "i_system.h"
 #include "info.h"
 #include "p_local.h"
@@ -8,6 +9,7 @@
 #include "r_defs.h"
 #include "r_main.h"
 #include "r_state.h"
+#include "st_stuff.h"
 #include "z_zone.h"
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +23,7 @@ doomsat_wire_thing (mobj_t *mobj)
     thing.y = mobj->y;
     thing.z = mobj->z;
     thing.angle = mobj->angle;
+    thing.sprite = mobj->sprite;
     thing.frame = mobj->frame;
     thing.flags = mobj->flags;
     return thing;
@@ -68,7 +71,7 @@ doomsat_wire_psprite (pspdef_t psprite)
     struct doomsat_psprite result;
     result.sx = psprite.sx;
     result.sy = psprite.sy;
-    if (psprite.state != NULL)
+    if (psprite.state == NULL)
         result.state = -1;
     else
         result.state = psprite.state - states;
@@ -77,7 +80,7 @@ doomsat_wire_psprite (pspdef_t psprite)
 struct doomsat_psprite *psprite_array = NULL;
 
 struct doomsat_state
-doomsat_State (void)
+doomsat_GetState (void)
 {
     // MARK: - thinkers
     int num_thinkers = 0;
@@ -190,6 +193,7 @@ doomsat_State (void)
             sizeof (player->weaponowned));
     memcpy (state.player_cards, player->cards, sizeof (player->cards));
     memcpy (state.player_frags, player->frags, sizeof (player->frags));
+    memcpy(state.player_powers, player->powers, sizeof(player->powers));
     state.player_message = 0;
 
     state.sectors_length = numsectors;
@@ -226,12 +230,13 @@ doomsat_LoadState (struct doomsat_state state)
     automapactive = state.automapactive;
     menuactive = state.menuactive;
 
-    viewx = state.viewx;
-    viewy = state.viewy;
-    viewz = state.viewz;
-    viewangle = state.viewangle;
-
     player_t *player = &players[displayplayer];
+
+    player->mo->x = state.viewx;
+    player->mo->y = state.viewy;
+    player->viewz = state.viewz;
+    player->mo->angle = state.viewangle;
+
     player->viewz = state.player_viewz;
     player->extralight = state.player_extralight;
     player->fixedcolormap = state.player_fixedcolormap;
@@ -249,7 +254,6 @@ doomsat_LoadState (struct doomsat_state state)
     memcpy (player->powers, state.player_powers, sizeof (state.player_powers));
     player->message = "message"; // TODO: implement properly
 
-    numsectors = state.sectors_length;
     if (state.sectors_length != numsectors)
         I_Error ("sector count mismatch");
 
@@ -291,7 +295,7 @@ doomsat_LoadState (struct doomsat_state state)
 
     for (int i = 0; i < numlines; ++i)
         {
-            lines[numlines].flags = state.lines[i].flags;
+            lines[i].flags = state.lines[i].flags;
         }
 
     for (int i = 0; i < NUMPSPRITES; ++i)
@@ -320,8 +324,8 @@ doomsat_LoadState (struct doomsat_state state)
             Z_Free (mobj_storage);
             mobj_storage = NULL;
         }
-    mobj_storage = Z_Malloc (sizeof (struct doomsat_mobj) * state.mobj_length,
-                             PU_STATIC, mobj_storage);
+    mobj_storage = Z_Malloc (sizeof (mobj_t) * state.mobj_length, PU_STATIC,
+                             mobj_storage);
 
     for (int i = 0; i < state.mobj_length; ++i)
         {
@@ -332,6 +336,7 @@ doomsat_LoadState (struct doomsat_state state)
             mo->y = src->y;
             mo->z = src->z;
             mo->angle = src->angle;
+            mo->sprite = src->sprite;
             mo->frame = src->frame;
             mo->flags = src->flags;
 
@@ -346,5 +351,23 @@ doomsat_LoadState (struct doomsat_state state)
 
             sector->thinglist = mo;
         }
+}
+
+void
+doomsat_Draw (struct doomsat_state state)
+{
+    doomsat_LoadState (state);
+
+    R_RenderPlayerView (&players[displayplayer]);
+    ST_Ticker ();
+    HU_Ticker ();
+    // TODO: if (inhelpscreensstate && !inhelpscreens) pass refresh=true
+    ST_Drawer (false, false);
+    if (state.gametic)
+        {
+            HU_Drawer ();
+        }
+
+    I_FinishUpdate ();
 }
 #endif

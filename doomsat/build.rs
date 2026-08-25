@@ -4,6 +4,21 @@ use std::{
     process::Command,
 };
 
+#[derive(Debug)]
+struct SerdeDerives;
+
+impl bindgen::callbacks::ParseCallbacks for SerdeDerives {
+    fn add_derives(&self, info: &bindgen::callbacks::DeriveInfo<'_>) -> Vec<String> {
+        match info.name {
+            "doomsat_mobj" | "doomsat_sector" | "doomsat_side" | "doomsat_line"
+            | "doomsat_psprite" => {
+                vec!["serde::Serialize".into(), "serde::Deserialize".into()]
+            }
+            _ => vec![],
+        }
+    }
+}
+
 fn main() {
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let doom_dir = manifest_dir.join("../doom").canonicalize().unwrap();
@@ -31,9 +46,12 @@ fn main() {
         .header(doom_dir.join("doomgeneric.h").display().to_string())
         .header(doom_dir.join("doomsat.h").display().to_string())
         .allowlist_type(r"^(pixel_t|doomsat_.*)$")
-        .allowlist_function(r"^(doomgeneric_(Create|Tick)|doomsat_State)$")
+        .allowlist_function(r"^(doomgeneric_(Create|Tick)|doomsat_GetState|doomsat_Draw)$")
         .allowlist_var(r"^DG_ScreenBuffer$")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        .parse_callbacks(Box::new(SerdeDerives))
+        .clang_arg("-DDOOMSAT_DOOMSTM")
+        .clang_arg("-DDOOMSAT_DOOMCLIENT")
         .generate()
         .expect("failed to generate Doom bindings");
 
