@@ -1,36 +1,55 @@
-use std::{cell::RefCell, collections::VecDeque, sync::OnceLock, time::Instant};
+use doomsat::doom::{Doom, DoomCallbacks};
 use minifb::{InputCallback, Key, Window, WindowOptions};
-use crate::doom::DoomsatCallbacks;
+use std::{
+    collections::VecDeque,
+    path::PathBuf,
+    sync::mpsc::{self, Receiver, Sender},
+    time::Instant,
+};
 
 struct DoomClient {
     initial_time: Instant,
     window: Window,
-    key_queue: VecDeque<(bool, u8)>,
+    key_queue: Receiver<(bool, u8)>,
 }
-impl DoomsatCallbacks for DoomClient {
-    fn new() -> Self {
-        let window = Window::new("Doom", 320, 200, WindowOptions::default())
-            .expect("failed to create window");
-        window.set_input_callback(Box::new(DoomInput));
-        DoomClient {
-            initial_time: Instant::now(),
-            window,
-            key_queue: VecDeque::new(),
-        }
-    }
+struct DoomInput {
+    key_events: Sender<(bool, u8)>,
 }
-
-struct DoomInput;
-
 impl InputCallback for DoomInput {
     fn add_char(&mut self, _character: u32) {}
 
     fn set_key_state(&mut self, key: Key, pressed: bool) {
         if let Some(key) = doom_key(key) {
-            KEY_QUEUE.with(|queue| {
-                queue.borrow_mut().push_back((pressed as c_int, key));
-            });
+            let _ = self.key_events.send((pressed, key));
         }
+    }
+}
+impl DoomCallbacks for DoomClient {
+    fn new() -> Self {
+        let (key_events, key_queue) = mpsc::channel();
+
+        let mut window = Window::new("Doom", 320, 200, WindowOptions::default())
+            .expect("failed to create window");
+        window.set_input_callback(Box::new(DoomInput { key_events }));
+        DoomClient {
+            initial_time: Instant::now(),
+            window,
+            key_queue,
+        }
+    }
+    fn on_draw(&mut self, buf: &[u32; 320 * 200]) {
+        self.window.update_with_buffer(buf, 320, 200).unwrap();
+    }
+    fn get_key_event(&mut self) -> Option<(bool, u8)> {
+        self.key_queue.try_recv().ok()
+    }
+    fn sleep(&mut self, ms: u32) {
+        std::thread::sleep(std::time::Duration::from_millis(ms.into()));
+    }
+    fn init(&mut self) {}
+    fn set_window_title(&mut self, _title: &str) {}
+    fn get_elapsed(&mut self) -> core::time::Duration {
+        self.initial_time.elapsed()
     }
 }
 
@@ -78,8 +97,9 @@ fn doom_key(key: Key) -> Option<u8> {
         Key::Down => 0xaf,
         Key::Comma => 0xa0,
         Key::Period => 0xa1,
-        Key::Space => 0xa2,
-        Key::LeftCtrl | Key::RightCtrl => 0xa3,
+        Key::Space => 0xa3,
+        // ...ok i switched ctrl & space bc... cmon
+        Key::LeftCtrl | Key::RightCtrl => 0xa2,
         Key::Escape => 27,
         Key::Enter | Key::NumPadEnter => 13,
         Key::Tab => 9,
@@ -134,3 +154,24 @@ fn doom_key(key: Key) -> Option<u8> {
     })
 }
 
+fn main() {
+    let wad = PathBuf::from("../wad/doom1.wad");
+
+    let mut client = DoomClient::new();
+    let mut doom = Doom::create(
+        &mut client,
+        &[
+            "doomclient".to_owned(),
+            "-iwad".to_owned(),
+            wad.to_string_lossy().into_owned(),
+            "-skill".to_owned(),
+            "5".to_owned(),
+            "-warp".to_owned(),
+            "1".to_owned(),
+            "9".to_owned(),
+        ],
+    );
+    loop {
+        doom.tick();
+    }
+}
