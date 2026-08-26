@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef DOOMSAT_DOOMSTM
+#if DOOMSAT_DOOMSTM
 struct doomsat_mobj
 doomsat_wire_thing (mobj_t *mobj)
 {
@@ -218,7 +218,7 @@ doomsat_GetState (void)
 }
 #endif
 
-#ifdef DOOMSAT_DOOMCLIENT
+#if DOOMSAT_DOOMCLIENT
 mobj_t *mobj_storage = NULL;
 
 void

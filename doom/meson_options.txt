@@ -1,4 +1,12 @@
 option(
+  'mode',
+  type: 'combo',
+  choices: ['stm', 'client'],
+  value: 'stm',
+  description: 'Build mode.',
+)
+
+option(
   'video_backend',
   type: 'combo',
   choices: ['xlib'],

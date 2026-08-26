@@ -1,14 +1,7 @@
 #ifndef DOOMSAT
 #define DOOMSAT
 
-// the two main macros which doomsat uses are
-// 1. DOOMSAT_DOOMSTM
-// 2. DOOMSAT_DOOMCLIENT
-// will eventually port this to use meson
-
-#define DOOMSAT_DOOMSTM
-#define DOOMSAT_DOOMCLIENT
-
+#include "doomsat_config.h"
 #include "doomdef.h"
 #include "p_pspr.h"
 #include <stdint.h>
@@ -97,11 +90,11 @@ struct doomsat_state
     const struct doomsat_mobj *mobjs;
 };
 
-#ifdef DOOMSAT_DOOMSTM
+#if DOOMSAT_DOOMSTM
 struct doomsat_state doomsat_GetState (void);
 #endif
 
-#ifdef DOOMSAT_DOOMCLIENT
+#if DOOMSAT_DOOMCLIENT
 void doomsat_Draw (struct doomsat_state state);
 #endif
 

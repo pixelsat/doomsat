@@ -13,6 +13,12 @@ project(
 
 cc = meson.get_compiler('c')
 
+mode = get_option('mode')
+conf = configuration_data()
+conf.set10('DOOMSAT_DOOMSTM', mode == 'stm')
+conf.set10('DOOMSAT_DOOMCLIENT', mode == 'client')
+configure_file(output: 'doomsat_config.h', configuration: conf)
+
 doom_core = files(
   'am_map.c',
   'd_event.c',
