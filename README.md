@@ -1,5 +1,9 @@
-## various todos
+## rough todo list
 
+* wad pruning
+    * use a declarative python script to prune from shareware
+    * as we prune, slowly work on macro'ing out every renderer path fails in doomstm
+* get doomstm to build on stm target
 * add logging via callbacks
 
 # doomsat

@@ -25,6 +25,7 @@ doom_core = files(
   'doomdef.c',
   'doomgeneric.c',
   'doomsat.c',
+  'doomsat_strings.c',
   'doomstat.c',
   'dstrings.c',
   'dummy.c',

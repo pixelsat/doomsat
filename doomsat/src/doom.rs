@@ -9,11 +9,8 @@ mod bindings {
 }
 
 pub trait DoomCallbacks {
-    fn new() -> Self
-    where
-        Self: Sized;
     fn init(&mut self);
-    fn on_draw(&mut self, buf: &[u32; 320 * 200]);
+    fn on_draw(&mut self, buf: &[u32; 640 * 400]);
     // if there was an event, (pressed, code)
     fn get_key_event(&mut self) -> Option<(bool, u8)>;
     fn sleep(&mut self, ms: u32);
@@ -61,7 +58,7 @@ mod doom_sys {
         if pointer.is_null() {
             return;
         }
-        let buf = unsafe { pointer.cast::<[u32; 320 * 200]>().as_ref() };
+        let buf = unsafe { pointer.cast::<[u32; 640 * 400]>().as_ref() };
         if buf.is_none() {
             return;
         }
@@ -150,13 +147,13 @@ impl<'a, T: DoomCallbacks> Doom<'a, T> {
         unsafe { bindings::doomsat_Draw(state.into()) }
     }
     pub fn with_screen<F>(&mut self, f: F)
-        where F: FnOnce(&[u32; 320 * 200])
+        where F: FnOnce(&[u32; 640 * 400])
     {
         let pointer = unsafe { bindings::DG_ScreenBuffer };
         if pointer.is_null() {
             return;
         }
-        let buf = unsafe { pointer.cast::<[u32; 320 * 200]>().as_ref() };
+        let buf = unsafe { pointer.cast::<[u32; 640 * 400]>().as_ref() };
         if buf.is_none() {
             return;
         }
@@ -189,7 +186,7 @@ pub struct DoomsatState {
     pub player_cards: [boolean; 6usize],
     pub player_frags: [::std::os::raw::c_int; 4usize],
     pub player_powers: [::std::os::raw::c_int; 6usize],
-    pub player_message: ::std::os::raw::c_int,
+    pub player_message: u16,
     pub player_psprites: [doomsat_psprite; 2usize],
     pub sectors: Vec<doomsat_sector>,
     pub sides: Vec<doomsat_side>,

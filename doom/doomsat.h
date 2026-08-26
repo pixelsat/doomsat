@@ -80,7 +80,7 @@ struct doomsat_state
     boolean player_cards[NUMCARDS];
     int player_frags[MAXPLAYERS];
     int player_powers[NUMPOWERS];
-    int player_message; // TODO: is actually a string, need to figure out how to represetn
+    uint16_t player_message;
 
     struct doomsat_psprite player_psprites[NUMPSPRITES];
 

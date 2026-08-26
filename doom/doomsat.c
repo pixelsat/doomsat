@@ -1,4 +1,5 @@
 #include "doomsat.h"
+#include "doomsat_strings.h"
 #include "doomstat.h"
 #include "hu_stuff.h"
 #include "i_system.h"
@@ -194,7 +195,7 @@ doomsat_GetState (void)
     memcpy (state.player_cards, player->cards, sizeof (player->cards));
     memcpy (state.player_frags, player->frags, sizeof (player->frags));
     memcpy(state.player_powers, player->powers, sizeof(player->powers));
-    state.player_message = 0;
+    state.player_message = doomsat_intern_string(player->message);
 
     state.sectors_length = numsectors;
     state.sectors = sector_array;
@@ -252,7 +253,7 @@ doomsat_LoadState (struct doomsat_state state)
     memcpy (player->cards, state.player_cards, sizeof (state.player_cards));
     memcpy (player->frags, state.player_frags, sizeof (state.player_frags));
     memcpy (player->powers, state.player_powers, sizeof (state.player_powers));
-    player->message = "message"; // TODO: implement properly
+    player->message = doomsat_unintern_string(state.player_message);
 
     if (state.sectors_length != numsectors)
         I_Error ("sector count mismatch");
