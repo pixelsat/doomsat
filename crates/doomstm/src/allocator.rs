@@ -334,7 +334,7 @@ pub(crate) fn setup_zones(dtcm: &'static mut [u8], sram: &'static mut [u8]) {
         Bank::Sram.set(Zone::new(sram, sram.len()));
     }
 }
-/*
+
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn Z_Init() {
     unsafe {
@@ -448,4 +448,3 @@ pub unsafe extern "C" fn Z_ZoneSize() -> c_int {
         .try_into()
         .unwrap_or(c_int::MAX)
 }
- */

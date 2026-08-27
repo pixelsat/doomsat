@@ -2,6 +2,11 @@
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
+        "linkedProjects": [
+          "crates/doomclient/Cargo.toml",
+          "crates/doomstm/Cargo.toml",
+          "crates/shared/Cargo.toml"
+        ],
         "check": {
           "workspace": false
         }

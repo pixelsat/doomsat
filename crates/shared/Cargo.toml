@@ -10,7 +10,7 @@ client = []
 serde = ["dep:rkyv"]
 
 [dependencies]
-rkyv = { version = "0.8.18", features = ["unaligned", "little_endian"], optional = true }
+rkyv = { version = "0.8.18", features = ["little_endian"], optional = true }
 
 [build-dependencies]
 bindgen = "0.72.1"

@@ -8,6 +8,7 @@ use std::{
 
 use doomclient::Doom;
 use minifb::{InputCallback, Key};
+use rkyv::util::Align;
 use shared::doom_serde::{DoomsatState, SERIALIZED_STATE_SIZE};
 
 const SOCKET_PATH: &str = "/tmp/doomsat.sock";
@@ -54,7 +55,7 @@ fn main() {
     let input = DoomInput { key_events: sender };
     let mut doom = Doom::create(input);
 
-    let mut buf = [0u8; SERIALIZED_STATE_SIZE];
+    let mut buf = Align([0u8; SERIALIZED_STATE_SIZE]);
     loop {
         let mut len = [0; size_of::<u32>()];
         if socket.read_exact(&mut len).is_err() {
@@ -63,17 +64,13 @@ fn main() {
 
         let len = usize::try_from(u32::from_le_bytes(len)).expect("state is too large");
         assert!(len <= SERIALIZED_STATE_SIZE, "state is too large");
-        dbg!(len);
         if socket.read_exact(&mut buf[..len]).is_err() {
             return;
         }
-        let Some(state) = DoomsatState::deserialize(&buf[..len]) else {
-            eprintln!("[PI] failed to deserialize state");
+        let Some(state) = DoomsatState::deserialize(&(buf.0[..len])) else {
             continue;
         };
-        eprintln!("[PI] drawing state");
         doom.draw(state);
-        eprintln!("[PI] finished drawing state");
 
         while let Ok((pressed, key)) = receiver.try_recv() {
             if socket.write_all(&[pressed as u8, key]).is_err() {

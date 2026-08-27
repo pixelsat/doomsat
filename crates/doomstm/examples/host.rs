@@ -1,6 +1,12 @@
-use std::{cell::UnsafeCell, io::{Read as _, Write as _}, os::unix::net::{UnixListener, UnixStream}, sync::mpsc::{self, Receiver}, thread, time::Instant};
-use minifb::{Window, WindowOptions};
 use doomstm::{Doom, DoomCallbacks};
+use std::{
+    cell::UnsafeCell,
+    io::{Read as _, Write as _},
+    os::unix::net::{UnixListener, UnixStream},
+    sync::mpsc::{self, Receiver},
+    thread,
+    time::Instant,
+};
 
 #[repr(transparent)]
 struct SimpleZone<const N: usize>(UnsafeCell<[u8; N]>);
@@ -12,8 +18,8 @@ impl<const N: usize> SimpleZone<N> {
     }
 }
 
-static DTCM_HEAP: SimpleZone<{1024 * 512}> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
-static SRAM_HEAP: SimpleZone<{1024 * 512}> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
+static DTCM_HEAP: SimpleZone<{ 1024 * 512 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
+static SRAM_HEAP: SimpleZone<{ 1024 * 512 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
 
 struct DoomStd {
     initial: Instant,
@@ -61,7 +67,10 @@ fn main() {
     let (sender, key_events) = mpsc::channel();
     thread::spawn(move || read_input(input_socket, sender));
 
-    let mut callbacks = DoomStd { initial: Instant::now(), key_events };
+    let mut callbacks = DoomStd {
+        initial: Instant::now(),
+        key_events,
+    };
     let wad = include_bytes!("../../../wad/doom1.wad");
     let mut doom = Doom::create(&mut callbacks, wad, DTCM_HEAP.access(), SRAM_HEAP.access());
 

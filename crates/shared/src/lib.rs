@@ -12,7 +12,7 @@ pub mod doom_sys {
 pub mod doom_serde {
     use core::{mem::{self, MaybeUninit}};
 
-    use rkyv::{Archive, Deserialize, Serialize, ser::writer::Buffer, with::InlineAsBox};
+    use rkyv::{Archive, Deserialize, Serialize, ser::{allocator::SubAllocator, writer::Buffer}, util::Align, with::InlineAsBox};
 
 use crate::doom_sys::*;
 
@@ -285,12 +285,12 @@ use crate::doom_sys::*;
 
     impl DoomsatState {
         pub fn with_serialized<T, F>(self, f: F) -> Option<T> where F: FnOnce(&[u8]) -> T {
-            let mut out = [0u8; SERIALIZED_STATE_SIZE];
-            let mut scratch = [MaybeUninit::<u8>::uninit(); 256];
+            let mut out = Align([0u8; SERIALIZED_STATE_SIZE]);
+            let mut scratch = [MaybeUninit::<u8>::uninit(); 0];
             let bytes = rkyv::api::low::to_bytes_in_with_alloc::<_, _, rkyv::rancor::Failure>(
                 &self,
-                Buffer::from(&mut out),
-                rkyv::ser::allocator::SubAllocator::new(&mut scratch),
+                Buffer::from(&mut *out),
+                SubAllocator::new(&mut scratch),
             ).ok()?;
             Some(f(&bytes))
         }
