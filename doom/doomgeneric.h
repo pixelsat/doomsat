@@ -30,17 +30,24 @@ extern pixel_t* DG_ScreenBuffer;
 extern "C" {
 #endif
 
+#if DOOMSAT_DOOMSTM
+void
+doomgeneric_Create (int argc, char **argv, const uint8_t *wad_data,
+                    size_t wad_length);
+#endif
+#if DOOMSAT_DOOMCLIENT
 void doomgeneric_Create(int argc, char **argv);
+#endif
 void doomgeneric_Tick();
 
 
 //Implement below functions for your platform
-void DG_Init();
-void DG_DrawFrame();
-void DG_SleepMs(uint32_t ms);
-uint32_t DG_GetTicksMs();
-int DG_GetKey(int* pressed, unsigned char* key);
-void DG_SetWindowTitle(const char * title);
+extern void DG_Init();
+extern void DG_DrawFrame();
+extern void DG_SleepMs(uint32_t ms);
+extern uint32_t DG_GetTicksMs();
+extern int DG_GetKey(int* pressed, unsigned char* key);
+extern void DG_SetWindowTitle(const char * title);
 
 #ifdef __cplusplus
 }

@@ -1,20 +1,19 @@
-build_dir := "doom/build"
-
 default:
     @just --list
 
 # configure the meson build for libdoomsat
 setup:
-    meson setup {{build_dir}} doom
+    meson setup doom/build/stm doom -Dmode=stm
+    meson setup doom/build/client doom -Dmode=client
 
 # build libdoomsat.a
 build:
-    @[ -f {{build_dir}}/build.ninja ] || just setup
-    meson compile -C {{build_dir}}
+    meson compile -C doom/build/stm
+    meson compile -C doom/build/client
 
 # estimate peak ram for libdoomsat.a
 size: build
-    ./size.sh {{build_dir}}/libdoomsat.a
+    ./size.sh doom/build/stm/libdoomsat.a
 
 client:
     cd doomsat && cargo run --bin client
@@ -30,5 +29,5 @@ fmt:
     cd doomsat && cargo fmt
 
 clean:
-    rm -rf {{build_dir}}
+    rm -rf doom/build
     cd doomsat && cargo clean

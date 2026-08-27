@@ -20,8 +20,10 @@
 
 #include "config.h"
 
+#include "doomsat.h"
 #include "doomtype.h"
 #include "m_argv.h"
+#include "z_zone.h"
 
 #include "w_file.h"
 
@@ -35,10 +37,9 @@ extern wad_file_class_t win32_wad_file;
 
 #ifdef HAVE_MMAP
 extern wad_file_class_t posix_wad_file;
-#endif 
+#endif
 
-static wad_file_class_t *wad_file_classes[] = 
-{
+static wad_file_class_t *wad_file_classes[] = {
 /*
 #ifdef _WIN32
     &win32_wad_file,
@@ -50,9 +51,57 @@ static wad_file_class_t *wad_file_classes[] =
     &stdc_wad_file,
 };
 
-wad_file_t *W_OpenFile(char *path)
+#if DOOMSAT_DOOMSTM
+static size_t
+W_Memory_Read (wad_file_t *wad, unsigned int offset, void *buffer,
+               size_t buffer_len)
 {
-    wad_file_t *result;
+    size_t available;
+
+    if (offset >= wad->length)
+        {
+            return 0;
+        }
+
+    available = wad->length - offset;
+
+    if (buffer_len > available)
+        {
+            buffer_len = available;
+        }
+
+    memcpy (buffer, wad->mapped + offset, buffer_len);
+    return buffer_len;
+}
+static void
+W_Memory_CloseFile (wad_file_t *wad)
+{
+    Z_Free (wad);
+}
+
+static wad_file_class_t memory_wad_file = {
+    .OpenFile = NULL,
+    .CloseFile = W_Memory_CloseFile,
+    .Read = W_Memory_Read,
+};
+#endif
+
+wad_file_t *
+W_OpenFile (char *path)
+{
+    wad_file_t *result = NULL;
+#if DOOMSAT_DOOMSTM
+    if (strcmp (path, "doomsat.wad") == 0)
+        {
+            result = Z_Malloc (sizeof (wad_file_t), PU_STATIC, NULL);
+
+            result->file_class = &memory_wad_file;
+            result->mapped = doomsat_wad_data;
+            result->length = doomsat_wad_length;
+            return result;
+        }
+#endif
+
     int i;
 
     //!
@@ -60,36 +109,36 @@ wad_file_t *W_OpenFile(char *path)
     // directly into memory.
     //
 
-    if (!M_CheckParm("-mmap"))
-    {
-        return stdc_wad_file.OpenFile(path);
-    }
+    if (!M_CheckParm ("-mmap"))
+        {
+            return stdc_wad_file.OpenFile (path);
+        }
 
     // Try all classes in order until we find one that works
 
     result = NULL;
 
-    for (i = 0; i < arrlen(wad_file_classes); ++i)
-    {
-        result = wad_file_classes[i]->OpenFile(path);
-
-        if (result != NULL)
+    for (i = 0; i < arrlen (wad_file_classes); ++i)
         {
-            break;
+            result = wad_file_classes[i]->OpenFile (path);
+
+            if (result != NULL)
+                {
+                    break;
+                }
         }
-    }
 
     return result;
 }
 
-void W_CloseFile(wad_file_t *wad)
+void
+W_CloseFile (wad_file_t *wad)
 {
-    wad->file_class->CloseFile(wad);
+    wad->file_class->CloseFile (wad);
 }
 
-size_t W_Read(wad_file_t *wad, unsigned int offset,
-              void *buffer, size_t buffer_len)
+size_t
+W_Read (wad_file_t *wad, unsigned int offset, void *buffer, size_t buffer_len)
 {
-    return wad->file_class->Read(wad, offset, buffer, buffer_len);
+    return wad->file_class->Read (wad, offset, buffer, buffer_len);
 }
-

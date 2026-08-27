@@ -1,0 +1,109 @@
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+fn main() {
+    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+    let doom_dir = manifest_dir.join("../../doom").canonicalize().unwrap();
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let meson_build_dir = if cfg!(feature = "client") {
+        out_dir.join("doomclient-build")
+    } else {
+        out_dir.join("doomstm-build")
+    };
+
+    track_doom_sources(&doom_dir);
+
+    let meson = env::var_os("MESON").unwrap_or_else(|| "meson".into());
+    println!("cargo:rerun-if-env-changed=MESON");
+
+    if !meson_build_dir.join("meson-private/coredata.dat").exists() {
+        let mut command = &mut Command::new(&meson);
+
+        command = command.arg("setup")
+            .arg(&meson_build_dir)
+            .arg(&doom_dir);
+
+        if cfg!(feature = "client") {
+            command = command.arg("-Dmode=client");
+        }
+        if cfg!(feature = "stm") {
+            command = command.arg("-Dmode=stm");
+        }
+        run(&mut command);
+    }
+
+    run(Command::new(&meson)
+        .arg("compile")
+        .arg("-C")
+        .arg(&meson_build_dir));
+
+    let mut bindings = bindgen::Builder::default()
+        .use_core()
+        .header(doom_dir.join("doomgeneric.h").display().to_string())
+        .header(doom_dir.join("doomsat.h").display().to_string())
+        .allowlist_type(r"^(pixel_t|doomsat_.*)$")
+        .allowlist_function(r"^(doomgeneric_(Create|Tick)|doomsat_GetState|doomsat_Draw|DG_.*)$")
+        .allowlist_var(r"^DG_ScreenBuffer$")
+        .clang_arg(format!("-I{}", meson_build_dir.display()))
+        .clang_arg("-DDOOMSAT_BINDGEN");
+
+    if cfg!(feature = "stm") {
+        bindings = bindings.clang_arg("-DDOOMSAT_DOOMSTM");
+    }
+    if cfg!(feature = "client") {
+        bindings = bindings.clang_arg("-DDOOMSAT_DOOMCLIENT");
+    }
+
+    let bindings = bindings
+        .generate()
+        .expect("failed to generate Doom bindings");
+
+    bindings
+        .write_to_file(out_dir.join("bindings.rs"))
+        .expect("failed to write Doom bindings");
+
+    println!(
+        "cargo:rustc-link-search=native={}",
+        meson_build_dir.display()
+    );
+    println!("cargo:rustc-link-lib=static=doomsat");
+    println!("cargo:rustc-link-lib=m");
+}
+
+fn track_doom_sources(directory: &Path) {
+    for entry in fs::read_dir(directory).expect("failed to read Doom source directory") {
+        let path = entry.expect("failed to read Doom source entry").path();
+
+        if path.is_dir() {
+            let name = path.file_name().and_then(|name| name.to_str());
+
+            // Do not watch generated files or Git internals.
+            if name != Some("build") && name != Some(".git") {
+                track_doom_sources(&path);
+            }
+
+            continue;
+        }
+
+        let name = path.file_name().and_then(|name| name.to_str());
+        let extension = path.extension().and_then(|extension| extension.to_str());
+
+        if matches!(extension, Some("c" | "h" | "inc"))
+            || matches!(name, Some("meson.build" | "meson_options.txt"))
+        {
+            println!("cargo:rerun-if-changed={}", path.display());
+        }
+    }
+}
+
+fn run(command: &mut Command) {
+    let description = format!("{command:?}");
+    let status = command
+        .status()
+        .unwrap_or_else(|error| panic!("failed to run {description}: {error}"));
+
+    assert!(status.success(), "command failed: {description}");
+}

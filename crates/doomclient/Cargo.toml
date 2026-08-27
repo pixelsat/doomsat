@@ -1,0 +1,12 @@
+[package]
+name = "doomclient"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { version = "0.1.0", path = "../shared", default-features = false, features = ["client", "serde"] }
+smol = "2.0.2"
+minifb = "0.28.0"
+
+[dev-dependencies]
+rkyv = { version = "0.8.18", features = ["unaligned", "little_endian"] }

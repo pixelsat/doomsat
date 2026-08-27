@@ -38,7 +38,7 @@ enum
     PU_FREE,                        // a free block
     PU_LEVEL,                       // static until level exited
     PU_LEVSPEC,                     // a special thinker in a level
-    
+
     // Tags >= PU_PURGELEVEL are purgable whenever needed.
 
     PU_PURGELEVEL,
@@ -48,8 +48,9 @@ enum
 
     PU_NUM_TAGS
 };
-        
 
+
+// on doomstm these are provided by the host (rust binary)
 void	Z_Init (void);
 void*	Z_Malloc (int size, int tag, void *ptr);
 void    Z_Free (void *ptr);
@@ -61,6 +62,7 @@ void    Z_ChangeTag2 (void *ptr, int tag, char *file, int line);
 void    Z_ChangeUser(void *ptr, void **user);
 int     Z_FreeMemory (void);
 unsigned int Z_ZoneSize(void);
+
 
 //
 // This is used to get the local FILE:LINE info from CPP

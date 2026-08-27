@@ -406,7 +406,7 @@ boolean D_GrabMouseCallback(void)
 void doomgeneric_Tick()
 {
     TryRunTics (); // will run at least one tic
-    DG_DrawFrame();
+    // DG_DrawFrame();
 
     static  boolean		viewactivestate = false;
     static  boolean		menuactivestate = false;
@@ -453,6 +453,9 @@ void doomgeneric_Tick()
     if (gamestate == GS_LEVEL && gametic)
     	HU_Drawer ();
 
+    if (gamestate == GS_LEVEL && gametic)
+    	ST_Drawer (viewheight == 200, redrawsbar);
+
     // clean up border stuff
     if (gamestate != oldgamestate && gamestate != GS_LEVEL)
     	I_SetPalette (W_CacheLumpName (DEH_String("PLAYPAL"),PU_CACHE));
@@ -487,6 +490,8 @@ void doomgeneric_Tick()
     viewactivestate = viewactive;
     inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
+
+     I_FinishUpdate();
 }
 
 //

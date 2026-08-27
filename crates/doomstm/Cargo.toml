@@ -1,0 +1,11 @@
+[package]
+name = "doomstm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+heapless = "0.9.3"
+shared = { version = "0.1.0", path = "../shared", features = ["stm"] }
+
+[dev-dependencies]
+minifb = "0.28.0"

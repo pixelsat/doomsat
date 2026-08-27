@@ -1,7 +1,9 @@
 #ifndef DOOMSAT
 #define DOOMSAT
 
+// doomsat_config is provided by meson so it won't be available when built by bindgen
 #include "doomsat_config.h"
+
 #include "doomdef.h"
 #include "p_pspr.h"
 #include <stdint.h>
@@ -92,6 +94,9 @@ struct doomsat_state
 
 #if DOOMSAT_DOOMSTM
 struct doomsat_state doomsat_GetState (void);
+
+uint8_t *doomsat_wad_data;
+size_t doomsat_wad_length;
 #endif
 
 #if DOOMSAT_DOOMCLIENT

@@ -2,6 +2,7 @@
 
 * split into two crates + macro stuff
 * implement double-arena allocator (only on stm macro)
+* get doomstm compiling w/o stdlib
 * wad pruning
     * use a declarative python script to prune from shareware
     * as we prune, slowly work on macro'ing out every renderer path fails in doomstm
