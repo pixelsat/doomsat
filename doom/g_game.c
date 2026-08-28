@@ -1008,8 +1008,7 @@ void G_Ticker (void)
 	P_Ticker ();
 	ST_Ticker ();
 	AM_Ticker ();
-	// doomsat:
-	// HU_Ticker ();
+	HU_Ticker ();
 	break;
 
       case GS_INTERMISSION:

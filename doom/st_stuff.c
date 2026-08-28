@@ -377,7 +377,7 @@ static boolean	oldweaponsowned[NUMWEAPONS];
 static int	st_facecount = 0;
 
 // current face index, used by w_faces
-static int	st_faceindex = 0;
+/*static*/ int	st_faceindex = 0;
 
 // holds key-type for each key box on bar
 static int	keyboxes[3];
@@ -931,7 +931,7 @@ void ST_Ticker (void)
 
 }
 
-static int st_palette = 0;
+/*static*/ int st_palette = 0;
 
 void ST_doPaletteStuff(void)
 {
@@ -1416,3 +1416,9 @@ void ST_Init (void)
     st_backing_screen = (byte *) Z_Malloc(ST_WIDTH * ST_HEIGHT, PU_STATIC, 0);
 }
 
+void ST_DoomsatLoadPalette (void)
+{
+    byte*	pal;
+    pal = (byte *) W_CacheLumpNum (lu_palette, PU_CACHE)+st_palette*768;
+	I_SetPalette (pal);
+}

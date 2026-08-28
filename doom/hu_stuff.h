@@ -28,7 +28,7 @@
 #define HU_FONTEND	'_'	// the last font characters
 
 // Calculate # of glyphs in font.
-#define HU_FONTSIZE	(HU_FONTEND - HU_FONTSTART + 1)	
+#define HU_FONTSIZE	(HU_FONTEND - HU_FONTSTART + 1)
 
 #define HU_BROADCAST	5
 
@@ -55,5 +55,8 @@ void HU_Erase(void);
 
 extern char *chat_macros[10];
 
+struct doomsat_state;
+void HU_DoomsatGetMessage (struct doomsat_state *dst);
+void HU_DoomsatLoadMessage (struct doomsat_state *src);
 #endif
 

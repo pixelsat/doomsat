@@ -1,19 +1,37 @@
 #include "doomsat.h"
+#include "am_map.h"
+#include "d_main.h"
+#include "deh_main.h"
 #include "doomsat_strings.h"
 #include "doomstat.h"
+#include "f_finale.h"
 #include "hu_stuff.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "info.h"
+#include "m_menu.h"
 #include "p_local.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
+#include "p_setup.h"
+#include "p_spec.h"
 #include "r_defs.h"
+#include "r_draw.h"
 #include "r_main.h"
 #include "r_state.h"
 #include "st_stuff.h"
+#include "v_video.h"
+#include "w_wad.h"
+#include "wi_stuff.h"
 #include "z_zone.h"
 #include <stdio.h>
 #include <string.h>
+
+extern int showMessages; // m_menu.c:73, not exported
+extern int screenSize; // :81
+extern int st_palette; // st_stuff.c:934
+extern int	st_faceindex; // :380
+void R_ExecuteSetViewSize (void);
 
 #if DOOMSAT_DOOMSTM
 struct doomsat_mobj
@@ -169,12 +187,14 @@ doomsat_GetState (void)
 
     // MARK: - construct state
     struct doomsat_state state;
+    state.gameepisode = gameepisode;
+    state.gamemap = gamemap;
+    state.gameskill = gameskill;
     state.gamestate = gamestate;
     state.gametic = gametic;
     state.leveltime = leveltime;
     state.paused = paused;
-    state.automapactive = automapactive;
-    state.menuactive = menuactive;
+    state.st_palette = st_palette;
 
     state.viewx = viewx;
     state.viewy = viewy;
@@ -194,8 +214,30 @@ doomsat_GetState (void)
             sizeof (player->weaponowned));
     memcpy (state.player_cards, player->cards, sizeof (player->cards));
     memcpy (state.player_frags, player->frags, sizeof (player->frags));
-    memcpy(state.player_powers, player->powers, sizeof(player->powers));
-    state.player_message = doomsat_intern_string(player->message);
+    memcpy (state.player_powers, player->powers, sizeof (player->powers));
+    for (int i = 0; i < NUMPSPRITES; i++)
+        {
+            state.player_psprites[i]
+                = doomsat_wire_psprite (player->psprites[i]);
+        }
+
+    state.setting_screenblocks = screenblocks;
+    state.setting_detailLevel = detailLevel;
+    state.setting_usegamma = usegamma;
+    state.setting_showMessages = showMessages;
+    state.setting_mouseSensitivity = mouseSensitivity;
+    state.setting_sfxVolume = sfxVolume;
+    state.setting_musicVolume = musicVolume;
+
+    state.hud_st_faceindex = st_faceindex;
+    HU_DoomsatGetMessage (&state);
+
+    state.automapactive = automapactive;
+    AM_DoomsatGetState (&state);
+
+    state.menuactive = menuactive;
+    state.menuid = M_DoomsatWireMenu();
+    M_DoomsatWireDialog(&state);
 
     state.sectors_length = numsectors;
     state.sectors = sector_array;
@@ -206,12 +248,6 @@ doomsat_GetState (void)
     state.lines_length = numlines;
     state.lines = line_array;
 
-    for (int i = 0; i < NUMPSPRITES; i++)
-        {
-            state.player_psprites[i]
-                = doomsat_wire_psprite (player->psprites[i]);
-        }
-
     state.mobj_length = num_thinkers;
     state.mobjs = mobj_array;
     return state;
@@ -220,21 +256,36 @@ doomsat_GetState (void)
 
 #if DOOMSAT_DOOMCLIENT
 mobj_t *mobj_storage = NULL;
+int last_map = INT_MIN;
 
 void
 doomsat_LoadState (struct doomsat_state state)
 {
+    gameepisode = state.gameepisode;
+    gamemap = state.gamemap;
+    if (gamemap != last_map)
+        {
+            P_SetupLevel (state.gameepisode, state.gamemap, 0,
+                          state.gameskill);
+            last_map = gamemap;
+        }
+    gameskill = state.gameskill;
     gamestate = state.gamestate;
     gametic = state.gametic;
     leveltime = state.leveltime;
     paused = state.paused;
-    automapactive = state.automapactive;
     menuactive = state.menuactive;
+    if (state.st_palette != st_palette)
+        {
+            st_palette = state.st_palette;
+            ST_DoomsatLoadPalette ();
+        }
 
     player_t *player = &players[displayplayer];
 
     player->mo->x = state.viewx;
     player->mo->y = state.viewy;
+    player->mo->subsector = R_PointInSubsector (state.viewx, state.viewy);
     player->viewz = state.viewz;
     player->mo->angle = state.viewangle;
 
@@ -253,7 +304,39 @@ doomsat_LoadState (struct doomsat_state state)
     memcpy (player->cards, state.player_cards, sizeof (state.player_cards));
     memcpy (player->frags, state.player_frags, sizeof (state.player_frags));
     memcpy (player->powers, state.player_powers, sizeof (state.player_powers));
-    player->message = doomsat_unintern_string(state.player_message);
+    for (int i = 0; i < NUMPSPRITES; ++i)
+        {
+            const struct doomsat_psprite *src = &state.player_psprites[i];
+            pspdef_t *dst = &player->psprites[i];
+
+            dst->sx = src->sx;
+            dst->sy = src->sy;
+
+            if (src->state == -1)
+                dst->state = NULL;
+            else if (src->state < NUMSTATES)
+                dst->state = &states[src->state];
+            else
+                I_Error ("invalid psprite state");
+        }
+
+    screenblocks = state.setting_screenblocks;
+    screenSize = screenblocks - 3;
+    detailLevel = state.setting_detailLevel;
+    usegamma = state.setting_usegamma;
+    showMessages = state.setting_showMessages;
+    mouseSensitivity = state.setting_mouseSensitivity;
+    sfxVolume = state.setting_sfxVolume;
+    musicVolume = state.setting_musicVolume;
+
+    st_faceindex = state.hud_st_faceindex;
+    HU_DoomsatLoadMessage (&state);
+
+    automapactive = state.automapactive;
+    AM_DoomsatLoadState (&state);
+
+    M_DoomsatLoadMenu(state.menuid);
+    M_DoomsatLoadDialog(&state);
 
     if (state.sectors_length != numsectors)
         I_Error ("sector count mismatch");
@@ -299,22 +382,6 @@ doomsat_LoadState (struct doomsat_state state)
             lines[i].flags = state.lines[i].flags;
         }
 
-    for (int i = 0; i < NUMPSPRITES; ++i)
-        {
-            const struct doomsat_psprite *src = &state.player_psprites[i];
-            pspdef_t *dst = &player->psprites[i];
-
-            dst->sx = src->sx;
-            dst->sy = src->sy;
-
-            if (src->state == -1)
-                dst->state = NULL;
-            else if (src->state < NUMSTATES)
-                dst->state = &states[src->state];
-            else
-                I_Error ("invalid psprite state");
-        }
-
     for (int i = 0; i < numsectors; ++i)
         {
             sectors[i].thinglist = NULL;
@@ -357,18 +424,89 @@ doomsat_LoadState (struct doomsat_state state)
 void
 doomsat_Draw (struct doomsat_state state)
 {
+    static int last_screenblocks = -1;
+    static int last_detaillevel = -1;
+    static int last_gamma = -1;
+    int pause_y;
+
     doomsat_LoadState (state);
 
-    R_RenderPlayerView (&players[displayplayer]);
-    ST_Ticker ();
-    HU_Ticker ();
-    // TODO: if (inhelpscreensstate && !inhelpscreens) pass refresh=true
-    ST_Drawer (false, false);
-    if (state.gametic)
+    if (screenblocks != last_screenblocks || detailLevel != last_detaillevel)
         {
+            R_SetViewSize (screenblocks, detailLevel);
+            R_ExecuteSetViewSize ();
+            R_FillBackScreen ();
+            last_screenblocks = screenblocks;
+            last_detaillevel = detailLevel;
+        }
+
+    if (usegamma != last_gamma)
+        {
+            ST_DoomsatLoadPalette ();
+            last_gamma = usegamma;
+        }
+
+    if (gamestate == GS_LEVEL)
+        {
+            int animationtime = leveltime > 0 ? leveltime - 1 : 0;
+            P_UpdatePicAnimations (animationtime);
+        }
+
+    if (gamestate == GS_LEVEL && gametic)
+        HU_Erase ();
+
+    switch (gamestate)
+        {
+        case GS_LEVEL:
+            if (!gametic)
+                break;
+
+            if (automapactive)
+                {
+                    AM_DoomsatInitRenderer ();
+                    AM_Drawer ();
+                }
+
+            ST_Drawer (viewheight == SCREENHEIGHT, false);
+            break;
+
+        case GS_INTERMISSION:
+            WI_Drawer ();
+            break;
+
+        case GS_FINALE:
+            F_Drawer ();
+            break;
+
+        case GS_DEMOSCREEN:
+            D_PageDrawer ();
+            break;
+        }
+
+    I_UpdateNoBlit ();
+
+    if (gamestate == GS_LEVEL && gametic)
+        {
+            if (!automapactive)
+                {
+                    R_RenderPlayerView (&players[displayplayer]);
+
+                    if (scaledviewwidth != SCREENWIDTH)
+                        R_DrawViewBorder ();
+                }
+
             HU_Drawer ();
         }
 
+    if (paused)
+        {
+            pause_y = automapactive ? 4 : viewwindowy + 4;
+            V_DrawPatchDirect (
+                viewwindowx + (scaledviewwidth - 68) / 2, pause_y,
+                W_CacheLumpName (DEH_String ("M_PAUSE"), PU_CACHE));
+        }
+
+    M_Drawer ();
     I_FinishUpdate ();
 }
 #endif

@@ -58,7 +58,7 @@ typedef enum
 {
     AutomapState,
     FirstPersonState
-    
+
 } st_stateenum_t;
 
 
@@ -68,7 +68,7 @@ typedef enum
     StartChatState,
     WaitDestState,
     GetChatState
-    
+
 } st_chatstateenum_t;
 
 
@@ -85,5 +85,5 @@ extern cheatseq_t cheat_choppers;
 extern cheatseq_t cheat_clev;
 extern cheatseq_t cheat_mypos;
 
-
+void ST_DoomsatLoadPalette (void);
 #endif

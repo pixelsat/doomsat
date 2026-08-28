@@ -14,7 +14,7 @@
 //
 // DESCRIPTION:
 //   Menu widget stuff, episode selection and such.
-//    
+//
 
 
 #ifndef __M_MENU__
@@ -56,6 +56,10 @@ void M_StartControlPanel (void);
 extern int detailLevel;
 extern int screenblocks;
 
-
-
-#endif    
+enum doomsat_menu;
+struct doomsat_state;
+enum doomsat_menu M_DoomsatWireMenu(void);
+void M_DoomsatLoadMenu(enum doomsat_menu menu);
+void M_DoomsatWireDialog(struct doomsat_state *state);
+void M_DoomsatLoadDialog(struct doomsat_state *state);
+#endif

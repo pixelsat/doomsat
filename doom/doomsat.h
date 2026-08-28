@@ -1,7 +1,8 @@
 #ifndef DOOMSAT
 #define DOOMSAT
 
-// doomsat_config is provided by meson so it won't be available when built by bindgen
+// doomsat_config is provided by meson so it won't be available when built by
+// bindgen
 #include "doomsat_config.h"
 
 #include "doomdef.h"
@@ -42,20 +43,40 @@ struct doomsat_line
     short flags;
 };
 
-struct doomsat_psprite {
+struct doomsat_psprite
+{
     int sx;
     int sy;
     int state; // index into states array, see p_saveg.c:620
 };
 
+struct doomsat_mpoint
+{
+    int x;
+    int y;
+};
+
+enum doomsat_menu {
+    DOOMSAT_MENU_NONE,
+    DOOMSAT_MENU_MAIN,
+    DOOMSAT_MENU_EPISODE,
+    DOOMSAT_MENU_SKILL,
+    DOOMSAT_MENU_OPTIONS,
+    DOOMSAT_MENU_HELP1,
+    DOOMSAT_MENU_HELP2,
+    DOOMSAT_MENU_SOUND
+};
+
 struct doomsat_state
 {
+    int gameepisode;
+    int gamemap;
+    int gameskill;
     int gamestate;
     int gametic;
     int leveltime;
     boolean paused;
-    boolean automapactive;
-    boolean menuactive;
+    int st_palette;
 
     int viewx;
     int viewy;
@@ -75,9 +96,39 @@ struct doomsat_state
     boolean player_cards[NUMCARDS];
     int player_frags[MAXPLAYERS];
     int player_powers[NUMPOWERS];
-    uint16_t player_message;
-
     struct doomsat_psprite player_psprites[NUMPSPRITES];
+
+    int setting_screenblocks;
+    int setting_detailLevel;
+    int setting_usegamma;
+    int setting_showMessages;
+    int setting_mouseSensitivity;
+    int setting_sfxVolume;
+    int setting_musicVolume;
+
+    int hud_st_faceindex;
+    int hud_message_on;
+    int hud_message_line_length;
+    char text[80];
+
+    boolean automapactive;
+    int automap_m_x;
+    int automap_m_y;
+    int automap_m_w;
+    int automap_m_h;
+    int automap_scale_mtof;
+    int automap_grid;
+    int automap_cheating;
+    int automap_lightlev;
+    struct doomsat_mpoint automap_markpoints[10];
+
+    boolean menuactive;
+    uint16_t menuid;
+    short menu_itemOn;
+    short menu_whichSkull;
+    int menu_messageToPrint;
+    int menu_dialog_length;
+    char menu_dialog[160];
 
     int sectors_length;
     const struct doomsat_sector *sectors;
