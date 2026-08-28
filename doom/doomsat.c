@@ -102,14 +102,20 @@ struct doomsat_state
 doomsat_GetState (void)
 {
     // MARK: - thinkers
+    int level_active = gamestate == GS_LEVEL;
     int num_thinkers = 0;
+    int state_numsectors = level_active ? numsectors : 0;
+    int state_numsides = level_active ? numsides : 0;
+    int state_numlines = level_active ? numlines : 0;
     struct thinker_s *thinkercap_original = &thinkercap;
-    for (struct thinker_s *ptr = thinkercap.next; ptr != thinkercap_original;
-         ptr = ptr->next)
+
+    if (level_active)
         {
-            if (ptr->function.acp1 == (actionf_p1)P_MobjThinker)
+            for (struct thinker_s *ptr = thinkercap.next;
+                 ptr != thinkercap_original; ptr = ptr->next)
                 {
-                    num_thinkers++;
+                    if (ptr->function.acp1 == (actionf_p1)P_MobjThinker)
+                        num_thinkers++;
                 }
         }
 
@@ -118,16 +124,21 @@ doomsat_GetState (void)
             Z_Free (mobj_array);
             mobj_array = NULL;
         }
-    mobj_array = Z_Malloc (sizeof (struct doomsat_mobj) * num_thinkers,
-                           PU_STATIC, &mobj_array);
-    struct doomsat_mobj *thing_arr_ptr = mobj_array;
-    for (struct thinker_s *ptr = thinkercap.next; ptr != thinkercap_original;
-         ptr = ptr->next)
+    if (num_thinkers > 0)
         {
-            if (ptr->function.acp1 == (actionf_p1)P_MobjThinker)
+            mobj_array = Z_Malloc (
+                sizeof (struct doomsat_mobj) * num_thinkers, PU_STATIC,
+                &mobj_array);
+            struct doomsat_mobj *thing_arr_ptr = mobj_array;
+            for (struct thinker_s *ptr = thinkercap.next;
+                 ptr != thinkercap_original; ptr = ptr->next)
                 {
-                    *thing_arr_ptr = doomsat_wire_thing ((mobj_t *)(ptr));
-                    thing_arr_ptr++;
+                    if (ptr->function.acp1 == (actionf_p1)P_MobjThinker)
+                        {
+                            *thing_arr_ptr
+                                = doomsat_wire_thing ((mobj_t *)(ptr));
+                            thing_arr_ptr++;
+                        }
                 }
         }
 
@@ -137,17 +148,20 @@ doomsat_GetState (void)
             Z_Free (sector_array);
             sector_array = NULL;
         }
-    sector_array = Z_Malloc (sizeof (struct doomsat_sector) * numsectors,
-                             PU_STATIC, &sector_array);
-    struct doomsat_sector *sector_arr_ptr = sector_array;
-    sector_t *sector_src_ptr = sectors;
-    for (int i = 0; i < numsectors; i++)
+    if (state_numsectors > 0)
         {
-            *sector_arr_ptr = doomsat_wire_sector (*sector_src_ptr);
-            sector_arr_ptr++;
-            sector_src_ptr++;
+            sector_array = Z_Malloc (
+                sizeof (struct doomsat_sector) * state_numsectors, PU_STATIC,
+                &sector_array);
+            struct doomsat_sector *sector_arr_ptr = sector_array;
+            sector_t *sector_src_ptr = sectors;
+            for (int i = 0; i < state_numsectors; i++)
+                {
+                    *sector_arr_ptr = doomsat_wire_sector (*sector_src_ptr);
+                    sector_arr_ptr++;
+                    sector_src_ptr++;
+                }
         }
-    fflush (stdout);
 
     // MARK: - sides
     if (side_array != NULL)
@@ -155,15 +169,19 @@ doomsat_GetState (void)
             Z_Free (side_array);
             side_array = NULL;
         }
-    side_array = Z_Malloc (sizeof (struct doomsat_side) * numsides, PU_STATIC,
-                           &side_array);
-    struct doomsat_side *side_arr_ptr = side_array;
-    side_t *side_src_ptr = sides;
-    for (int i = 0; i < numsides; i++)
+    if (state_numsides > 0)
         {
-            *side_arr_ptr = doomsat_wire_side (*side_src_ptr);
-            side_arr_ptr++;
-            side_src_ptr++;
+            side_array = Z_Malloc (
+                sizeof (struct doomsat_side) * state_numsides, PU_STATIC,
+                &side_array);
+            struct doomsat_side *side_arr_ptr = side_array;
+            side_t *side_src_ptr = sides;
+            for (int i = 0; i < state_numsides; i++)
+                {
+                    *side_arr_ptr = doomsat_wire_side (*side_src_ptr);
+                    side_arr_ptr++;
+                    side_src_ptr++;
+                }
         }
 
     // MARK: - sides
@@ -172,15 +190,19 @@ doomsat_GetState (void)
             Z_Free (line_array);
             line_array = NULL;
         }
-    line_array = Z_Malloc (sizeof (struct doomsat_line) * numlines, PU_STATIC,
-                           &line_array);
-    struct doomsat_line *line_arr_ptr = line_array;
-    line_t *line_src_ptr = lines;
-    for (int i = 0; i < numlines; i++)
+    if (state_numlines > 0)
         {
-            *line_arr_ptr = doomsat_wire_line (*line_src_ptr);
-            line_arr_ptr++;
-            line_src_ptr++;
+            line_array = Z_Malloc (
+                sizeof (struct doomsat_line) * state_numlines, PU_STATIC,
+                &line_array);
+            struct doomsat_line *line_arr_ptr = line_array;
+            line_t *line_src_ptr = lines;
+            for (int i = 0; i < state_numlines; i++)
+                {
+                    *line_arr_ptr = doomsat_wire_line (*line_src_ptr);
+                    line_arr_ptr++;
+                    line_src_ptr++;
+                }
         }
 
     player_t *player = &players[displayplayer];
@@ -239,13 +261,13 @@ doomsat_GetState (void)
     state.menuid = M_DoomsatWireMenu();
     M_DoomsatWireDialog(&state);
 
-    state.sectors_length = numsectors;
+    state.sectors_length = state_numsectors;
     state.sectors = sector_array;
 
-    state.sides_length = numsides;
+    state.sides_length = state_numsides;
     state.sides = side_array;
 
-    state.lines_length = numlines;
+    state.lines_length = state_numlines;
     state.lines = line_array;
 
     state.mobj_length = num_thinkers;
@@ -263,7 +285,7 @@ doomsat_LoadState (struct doomsat_state state)
 {
     gameepisode = state.gameepisode;
     gamemap = state.gamemap;
-    if (gamemap != last_map)
+    if (state.gamestate == GS_LEVEL && gamemap != last_map)
         {
             P_SetupLevel (state.gameepisode, state.gamemap, 0,
                           state.gameskill);
@@ -279,6 +301,22 @@ doomsat_LoadState (struct doomsat_state state)
         {
             st_palette = state.st_palette;
             ST_DoomsatLoadPalette ();
+        }
+
+    if (state.gamestate != GS_LEVEL)
+        {
+            screenblocks = state.setting_screenblocks;
+            screenSize = screenblocks - 3;
+            detailLevel = state.setting_detailLevel;
+            usegamma = state.setting_usegamma;
+            showMessages = state.setting_showMessages;
+            mouseSensitivity = state.setting_mouseSensitivity;
+            sfxVolume = state.setting_sfxVolume;
+            musicVolume = state.setting_musicVolume;
+
+            M_DoomsatLoadMenu (state.menuid);
+            M_DoomsatLoadDialog (&state);
+            return;
         }
 
     player_t *player = &players[displayplayer];

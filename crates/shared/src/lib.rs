@@ -10,11 +10,16 @@ pub mod doom_sys {
 
 #[cfg(feature = "serde")]
 pub mod doom_serde {
-    use core::{mem::{self, MaybeUninit}};
+    use core::mem::{self, MaybeUninit};
 
-    use rkyv::{Archive, Deserialize, Serialize, ser::{allocator::SubAllocator, writer::Buffer}, util::Align, with::InlineAsBox};
+    use rkyv::{
+        Archive, Deserialize, Serialize,
+        ser::{allocator::SubAllocator, writer::Buffer},
+        util::Align,
+        with::InlineAsBox,
+    };
 
-use crate::doom_sys::*;
+    use crate::doom_sys::*;
 
     #[derive(Archive, Serialize, Deserialize)]
     pub struct DoomsatMobj {
@@ -160,26 +165,54 @@ use crate::doom_sys::*;
         }
     }
 
+    #[derive(Archive, Serialize, Deserialize)]
+    #[repr(C)]
+    pub struct DoomsatMpoint {
+        x: i32,
+        y: i32,
+    }
+    impl From<doomsat_mpoint> for DoomsatMpoint {
+        fn from(value: doomsat_mpoint) -> Self {
+            DoomsatMpoint {
+                x: value.x,
+                y: value.y,
+            }
+        }
+    }
+    impl Into<doomsat_mpoint> for ArchivedDoomsatMpoint {
+        fn into(self) -> doomsat_mpoint {
+            doomsat_mpoint {
+                x: self.x.into(),
+                y: self.y.into(),
+            }
+        }
+    }
+
     const _: () = {
         ["mobj"][mem::size_of::<doomsat_mobj>() - mem::size_of::<DoomsatMobj>()];
         ["sector"][mem::size_of::<doomsat_sector>() - mem::size_of::<DoomsatSector>()];
         ["side"][mem::size_of::<doomsat_side>() - mem::size_of::<DoomsatSide>()];
         ["line"][mem::size_of::<doomsat_line>() - mem::size_of::<DoomsatLine>()];
         ["psprite"][mem::size_of::<doomsat_psprite>() - mem::size_of::<DoomsatPsprite>()];
+        ["mpoint"][mem::size_of::<doomsat_mpoint>() - mem::size_of::<DoomsatMpoint>()];
     };
 
     #[derive(Archive, Serialize, Deserialize)]
     pub struct DoomsatState {
+        pub gameepisode: i32,
+        pub gamemap: i32,
+        pub gameskill: i32,
         pub gamestate: i32,
         pub gametic: i32,
         pub leveltime: i32,
         pub paused: boolean,
-        pub automapactive: boolean,
-        pub menuactive: boolean,
+        pub st_palette: i32,
+
         pub viewx: i32,
         pub viewy: i32,
         pub viewz: i32,
         pub viewangle: u32,
+
         pub player_viewz: i32,
         pub player_extralight: i32,
         pub player_fixedcolormap: i32,
@@ -192,8 +225,40 @@ use crate::doom_sys::*;
         pub player_cards: [boolean; 6],
         pub player_frags: [i32; 4],
         pub player_powers: [i32; 6],
-        pub player_message: u16,
         pub player_psprites: [DoomsatPsprite; 2],
+
+        pub setting_screenblocks: i32,
+        pub setting_detail_level: i32,
+        pub setting_usegamma: i32,
+        pub setting_show_messages: i32,
+        pub setting_mouse_sensitivity: i32,
+        pub setting_sfx_volume: i32,
+        pub setting_music_volume: i32,
+
+        pub hud_st_faceindex: i32,
+        pub hud_message_on: i32,
+        pub hud_message_line_length: i32,
+        pub text: [core::ffi::c_char; 80],
+
+        pub automapactive: boolean,
+        pub automap_m_x: i32,
+        pub automap_m_y: i32,
+        pub automap_m_w: i32,
+        pub automap_m_h: i32,
+        pub automap_scale_mtof: i32,
+        pub automap_grid: i32,
+        pub automap_cheating: i32,
+        pub automap_lightlev: i32,
+        pub automap_markpoints: [DoomsatMpoint; 10],
+
+        pub menuactive: boolean,
+        pub menuid: u16,
+        pub menu_item_on: i16,
+        pub menu_which_skull: i16,
+        pub menu_message_to_print: i32,
+        pub menu_dialog_length: i32,
+        pub menu_dialog: [core::ffi::c_char; 160],
+
         #[rkyv(with = InlineAsBox)]
         pub sectors: &'static [DoomsatSector],
         #[rkyv(with = InlineAsBox)]
@@ -206,15 +271,21 @@ use crate::doom_sys::*;
     impl From<doomsat_state> for DoomsatState {
         fn from(value: doomsat_state) -> Self {
             fn get_slice<T, O>(ptr: *const O, len: i32) -> &'static [T] {
-                unsafe { core::slice::from_raw_parts(ptr as *const T, len as usize) }
+                if len <= 0 || ptr.is_null() {
+                    &[]
+                } else {
+                    unsafe { core::slice::from_raw_parts(ptr.cast::<T>(), len as usize) }
+                }
             }
             DoomsatState {
+                gameepisode: value.gameepisode,
+                gamemap: value.gamemap,
+                gameskill: value.gameskill,
                 gamestate: value.gamestate,
                 gametic: value.gametic,
                 leveltime: value.leveltime,
                 paused: value.paused,
-                automapactive: value.automapactive,
-                menuactive: value.menuactive,
+                st_palette: value.st_palette,
                 viewx: value.viewx,
                 viewy: value.viewy,
                 viewz: value.viewz,
@@ -231,8 +302,35 @@ use crate::doom_sys::*;
                 player_cards: value.player_cards,
                 player_frags: value.player_frags,
                 player_powers: value.player_powers,
-                player_message: value.player_message,
-                player_psprites: value.player_psprites.map(|psp| psp.into()),
+                player_psprites: value.player_psprites.map(Into::into),
+                setting_screenblocks: value.setting_screenblocks,
+                setting_detail_level: value.setting_detailLevel,
+                setting_usegamma: value.setting_usegamma,
+                setting_show_messages: value.setting_showMessages,
+                setting_mouse_sensitivity: value.setting_mouseSensitivity,
+                setting_sfx_volume: value.setting_sfxVolume,
+                setting_music_volume: value.setting_musicVolume,
+                hud_st_faceindex: value.hud_st_faceindex,
+                hud_message_on: value.hud_message_on,
+                hud_message_line_length: value.hud_message_line_length,
+                text: value.text,
+                automapactive: value.automapactive,
+                automap_m_x: value.automap_m_x,
+                automap_m_y: value.automap_m_y,
+                automap_m_w: value.automap_m_w,
+                automap_m_h: value.automap_m_h,
+                automap_scale_mtof: value.automap_scale_mtof,
+                automap_grid: value.automap_grid,
+                automap_cheating: value.automap_cheating,
+                automap_lightlev: value.automap_lightlev,
+                automap_markpoints: value.automap_markpoints.map(Into::into),
+                menuactive: value.menuactive,
+                menuid: value.menuid,
+                menu_item_on: value.menu_itemOn,
+                menu_which_skull: value.menu_whichSkull,
+                menu_message_to_print: value.menu_messageToPrint,
+                menu_dialog_length: value.menu_dialog_length,
+                menu_dialog: value.menu_dialog,
                 sectors: get_slice(value.sectors, value.sectors_length),
                 sides: get_slice(value.sides, value.sides_length),
                 lines: get_slice(value.lines, value.lines_length),
@@ -243,12 +341,14 @@ use crate::doom_sys::*;
     impl Into<doomsat_state> for &ArchivedDoomsatState {
         fn into(self) -> doomsat_state {
             doomsat_state {
+                gameepisode: self.gameepisode.into(),
+                gamemap: self.gamemap.into(),
+                gameskill: self.gameskill.into(),
                 gamestate: self.gamestate.into(),
                 gametic: self.gametic.into(),
                 leveltime: self.leveltime.into(),
                 paused: self.paused.into(),
-                automapactive: self.automapactive.into(),
-                menuactive: self.menuactive.into(),
+                st_palette: self.st_palette.into(),
                 viewx: self.viewx.into(),
                 viewy: self.viewy.into(),
                 viewz: self.viewz.into(),
@@ -265,10 +365,42 @@ use crate::doom_sys::*;
                 player_cards: core::array::from_fn(|i| self.player_cards[i].into()),
                 player_frags: core::array::from_fn(|i| self.player_frags[i].into()),
                 player_powers: core::array::from_fn(|i| self.player_powers[i].into()),
-                player_message: self.player_message.into(),
-                player_psprites: core::array::from_fn(|i| unsafe {
-                    core::ptr::read(&self.player_psprites[i]).into()
+                player_psprites: core::array::from_fn(|i| doomsat_psprite {
+                    sx: self.player_psprites[i].sx.into(),
+                    sy: self.player_psprites[i].sy.into(),
+                    state: self.player_psprites[i].state.into(),
                 }),
+                setting_screenblocks: self.setting_screenblocks.into(),
+                setting_detailLevel: self.setting_detail_level.into(),
+                setting_usegamma: self.setting_usegamma.into(),
+                setting_showMessages: self.setting_show_messages.into(),
+                setting_mouseSensitivity: self.setting_mouse_sensitivity.into(),
+                setting_sfxVolume: self.setting_sfx_volume.into(),
+                setting_musicVolume: self.setting_music_volume.into(),
+                hud_st_faceindex: self.hud_st_faceindex.into(),
+                hud_message_on: self.hud_message_on.into(),
+                hud_message_line_length: self.hud_message_line_length.into(),
+                text: core::array::from_fn(|i| self.text[i].into()),
+                automapactive: self.automapactive.into(),
+                automap_m_x: self.automap_m_x.into(),
+                automap_m_y: self.automap_m_y.into(),
+                automap_m_w: self.automap_m_w.into(),
+                automap_m_h: self.automap_m_h.into(),
+                automap_scale_mtof: self.automap_scale_mtof.into(),
+                automap_grid: self.automap_grid.into(),
+                automap_cheating: self.automap_cheating.into(),
+                automap_lightlev: self.automap_lightlev.into(),
+                automap_markpoints: core::array::from_fn(|i| doomsat_mpoint {
+                    x: self.automap_markpoints[i].x.into(),
+                    y: self.automap_markpoints[i].y.into(),
+                }),
+                menuactive: self.menuactive.into(),
+                menuid: self.menuid.into(),
+                menu_itemOn: self.menu_item_on.into(),
+                menu_whichSkull: self.menu_which_skull.into(),
+                menu_messageToPrint: self.menu_message_to_print.into(),
+                menu_dialog_length: self.menu_dialog_length.into(),
+                menu_dialog: core::array::from_fn(|i| self.menu_dialog[i].into()),
                 sectors_length: self.sectors.len() as i32,
                 sectors: self.sectors.as_ptr() as *const _,
                 sides_length: self.sides.len() as i32,
@@ -284,14 +416,18 @@ use crate::doom_sys::*;
     pub const SERIALIZED_STATE_SIZE: usize = 64 * 1024;
 
     impl DoomsatState {
-        pub fn with_serialized<T, F>(self, f: F) -> Option<T> where F: FnOnce(&[u8]) -> T {
+        pub fn with_serialized<T, F>(self, f: F) -> Option<T>
+        where
+            F: FnOnce(&[u8]) -> T,
+        {
             let mut out = Align([0u8; SERIALIZED_STATE_SIZE]);
             let mut scratch = [MaybeUninit::<u8>::uninit(); 0];
             let bytes = rkyv::api::low::to_bytes_in_with_alloc::<_, _, rkyv::rancor::Failure>(
                 &self,
                 Buffer::from(&mut *out),
                 SubAllocator::new(&mut scratch),
-            ).ok()?;
+            )
+            .ok()?;
             Some(f(&bytes))
         }
         pub fn deserialize(bytes: &[u8]) -> Option<&ArchivedDoomsatState> {
