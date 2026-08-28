@@ -5,7 +5,7 @@ use core::{
     cell::UnsafeCell,
     ffi::{c_char, c_int, c_void},
     mem::{self, MaybeUninit},
-    ptr::null_mut,
+    ptr::{NonNull, null_mut},
 };
 
 use crate::sys::CALLBACKS;
@@ -47,7 +47,7 @@ const ID: u32 = 0x1D4A11;
 
 struct Block {
     size: usize,
-    owner: Option<*mut *mut u8>,
+    owner: Option<NonNull<*mut u8>>,
     tag: u8,
     id: u32,
     prev: *mut Block,
@@ -83,7 +83,7 @@ enum Bank {
 impl Bank {
     fn access(&self) -> &mut Zone {
         match self {
-            Bank::Dtcm => unsafe { (&mut *ITCM_ZONE.0.get()).assume_init_mut() },
+            Bank::Dtcm => unsafe { (&mut *DTCM_ZONE.0.get()).assume_init_mut() },
             Bank::Sram => unsafe { (&mut *SRAM_ZONE.0.get()).assume_init_mut() },
         }
     }
@@ -96,7 +96,7 @@ struct ZoneManager(UnsafeCell<MaybeUninit<Zone>>);
 unsafe impl Send for ZoneManager {}
 unsafe impl Sync for ZoneManager {}
 
-static ITCM_ZONE: ZoneManager = ZoneManager(UnsafeCell::new(MaybeUninit::uninit()));
+static DTCM_ZONE: ZoneManager = ZoneManager(UnsafeCell::new(MaybeUninit::uninit()));
 static SRAM_ZONE: ZoneManager = ZoneManager(UnsafeCell::new(MaybeUninit::uninit()));
 
 struct Zone {
@@ -129,6 +129,15 @@ impl Zone {
 
         self.sentinel.next = first;
         self.sentinel.prev = first;
+    }
+    fn allocation_size(requested: usize) -> usize {
+        let raw = (requested + size_of::<Block>()).next_multiple_of(align_of::<Block>());
+
+        if raw < 1024 {
+            raw
+        } else {
+            raw.next_multiple_of(512)
+        }
     }
     fn contains_payload(&self, ptr: *mut u8) -> bool {
         let ptr = ptr as usize;
@@ -174,7 +183,7 @@ impl Zone {
                 return;
             }
             if let Some(owner) = (*block).owner {
-                *owner = null_mut();
+                *owner.as_ptr() = null_mut();
             }
 
             (*block).owner = None;
@@ -197,10 +206,10 @@ impl Zone {
         &mut self,
         size: usize,
         tag: u8,
-        owner: Option<*mut *mut u8>,
-    ) -> Option<*mut u8> {
+        owner: Option<NonNull<*mut u8>>,
+    ) -> Option<NonNull<u8>> {
         unsafe {
-            let size = (size as usize + size_of::<Block>()).next_multiple_of(align_of::<Block>());
+            let size = Zone::allocation_size(size);
 
             let mut cursor: *mut Block = &mut self.sentinel;
 
@@ -214,11 +223,11 @@ impl Zone {
                         let ptr = (next as *mut u8).add(mem::size_of::<Block>());
                         self.free(ptr);
 
-                        // after it's freed it's possible that
-                        // cursor.next is no longer this same
-                        // block (e.g. if there was a free block
-                        // before the cache that it got merged w/)
-                        // so we loop and check next again
+                        // The cache block may have merged into cursor, so
+                        // reconsider cursor before advancing past it.
+                        if (*cursor).tag == Tag::Free.to_c() && (*cursor).size >= size {
+                            break;
+                        }
                         continue;
                     }
                     Tag::Free => {
@@ -264,32 +273,36 @@ impl Zone {
             (*cursor).tag = tag;
             (*cursor).id = ID;
 
-            let result = (cursor as *mut u8).add(size_of::<Block>());
+            let result = NonNull::new_unchecked((cursor as *mut u8).add(size_of::<Block>()));
 
             if let Some(owner_slot) = owner {
-                *owner_slot = result;
+                *owner_slot.as_ptr() = result.as_ptr();
             }
 
             Some(result)
         }
     }
 
-    unsafe fn block_for(ptr: *mut u8) -> Option<*mut Block> {
+    unsafe fn block_for(ptr: *mut u8) -> Option<NonNull<Block>> {
         unsafe {
             let block = ptr.sub(size_of::<Block>()) as *mut Block;
 
-            if (*block).id != ID { None } else { Some(block) }
+            if (*block).id != ID {
+                None
+            } else {
+                Some(NonNull::new_unchecked(block))
+            }
         }
     }
 
     unsafe fn change_tag(&mut self, ptr: *mut u8, new_tag: u8) {
         unsafe {
             if let Some(block) = Self::block_for(ptr) {
-                if Tag::from_c(new_tag) == Tag::Cache && (*block).owner.is_none() {
+                if Tag::from_c(new_tag) == Tag::Cache && (*block.as_ptr()).owner.is_none() {
                     CALLBACKS.with(|c| c.log("ownerless cache block tag change ignored"));
                     return;
                 }
-                (*block).tag = new_tag;
+                (*block.as_ptr()).tag = new_tag;
             }
         }
     }
@@ -297,11 +310,7 @@ impl Zone {
     unsafe fn change_owner(&mut self, ptr: *mut u8, new_owner: *mut *mut u8) {
         unsafe {
             if let Some(block) = Self::block_for(ptr) {
-                (*block).owner = if new_owner.is_null() {
-                    None
-                } else {
-                    Some(new_owner)
-                };
+                (*block.as_ptr()).owner = NonNull::new(new_owner);
                 if !new_owner.is_null() {
                     *new_owner = ptr;
                 }
@@ -347,19 +356,19 @@ pub unsafe extern "C" fn Z_Init() {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn Z_Malloc(size: c_int, tag: c_int, owner: *mut *mut u8) -> *mut u8 {
     unsafe {
-        let owner = if owner.is_null() { None } else { Some(owner) };
+        let owner = NonNull::new(owner);
         let tag = tag.try_into().unwrap_or(0);
         let preferred = Zone::preferred_banks(size as _, Tag::from_c(tag));
         if let Some(ptr) = preferred[0]
             .access()
             .try_allocate(size as usize, tag, owner)
         {
-            ptr
+            ptr.as_ptr()
         } else if let Some(ptr) = preferred[1]
             .access()
             .try_allocate(size as usize, tag, owner)
         {
-            ptr
+            ptr.as_ptr()
         } else {
             panic!("out of memory")
         }

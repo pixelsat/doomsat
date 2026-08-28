@@ -1,13 +1,11 @@
 ## rough todo list
 
-* split into two crates + macro stuff
-* implement double-arena allocator (only on stm macro)
 * get doomstm compiling w/o stdlib
+* set up proper error handling
 * wad pruning
     * use a declarative python script to prune from shareware
     * as we prune, slowly work on macro'ing out every renderer path fails in doomstm
 * get doomstm to build on stm target with silly linker stuff
-* add logging via callbacks
 
 # doomsat
 

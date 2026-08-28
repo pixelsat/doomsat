@@ -15,11 +15,14 @@ build:
 size: build
     ./size.sh doom/build/stm/libdoomsat.a
 
-client:
-    cd doomsat && cargo run --bin client
-
 server:
-    cd doomsat && cargo run --bin server
+    cd crates/doomstm && cargo run --example host
+
+client:
+    cd crates/doomclient && cargo run --example host
+
+run:
+    pnpm dlx concurrently -n "stm,client" "just server" "just client"
 
 check:
     cd doomsat && cargo check
