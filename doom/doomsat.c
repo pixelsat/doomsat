@@ -263,7 +263,8 @@ doomsat_GetState (void)
     state.menuid = M_DoomsatWireMenu ();
     M_DoomsatWireDialog (&state);
 
-    WI_DoomsatGetState (&state);
+    if (gamestate == GS_INTERMISSION)
+        WI_DoomsatGetState (&state);
 
     state.sectors_length = state_numsectors;
     state.sectors = sector_array;
@@ -308,8 +309,16 @@ doomsat_LoadState (struct doomsat_state state)
             st_palette = state.st_palette;
             ST_DoomsatLoadPalette ();
         }
-    memcpy(pagename_storage, state.pagename, sizeof(pagename_storage));
+    memcpy (pagename_storage, state.pagename, sizeof (pagename_storage));
     pagename = pagename_storage;
+
+    if (state.gamestate == GS_INTERMISSION)
+        {
+            WI_DoomsatLoadState (&state);
+            if (last_gamestate != GS_INTERMISSION)
+                WI_loadData ();
+        }
+    last_gamestate = state.gamestate;
 
     if (state.gamestate != GS_LEVEL)
         {
@@ -383,11 +392,6 @@ doomsat_LoadState (struct doomsat_state state)
 
     M_DoomsatLoadMenu (state.menuid);
     M_DoomsatLoadDialog (&state);
-
-    WI_DoomsatLoadState (&state);
-    if (state.wi_state != last_gamestate)
-        WI_loadData ();
-    last_gamestate = state.wi_state;
 
     if (state.sectors_length != numsectors)
         I_Error ("sector count mismatch");
