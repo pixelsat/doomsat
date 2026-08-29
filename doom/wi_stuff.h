@@ -45,4 +45,8 @@ void WI_Start(wbstartstruct_t*	 wbstartstruct);
 // Shut down the intermission screen
 void WI_End(void);
 
+struct doomsat_state;
+void WI_loadData(void);
+void WI_DoomsatLoadState(struct doomsat_state* ds);
+void WI_DoomsatGetState(struct doomsat_state* ds);
 #endif

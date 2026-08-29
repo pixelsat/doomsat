@@ -10,6 +10,7 @@
 #include "i_video.h"
 #include "info.h"
 #include "m_menu.h"
+#include "m_misc.h"
 #include "p_local.h"
 #include "p_mobj.h"
 #include "p_pspr.h"
@@ -28,9 +29,10 @@
 #include <string.h>
 
 extern int showMessages; // m_menu.c:73, not exported
-extern int screenSize; // :81
-extern int st_palette; // st_stuff.c:934
-extern int	st_faceindex; // :380
+extern int screenSize;   // :81
+extern int st_palette;   // st_stuff.c:934
+extern int st_faceindex; // :380
+extern char *pagename;   // d_main.c:544
 void R_ExecuteSetViewSize (void);
 
 #if DOOMSAT_DOOMSTM
@@ -126,9 +128,8 @@ doomsat_GetState (void)
         }
     if (num_thinkers > 0)
         {
-            mobj_array = Z_Malloc (
-                sizeof (struct doomsat_mobj) * num_thinkers, PU_STATIC,
-                &mobj_array);
+            mobj_array = Z_Malloc (sizeof (struct doomsat_mobj) * num_thinkers,
+                                   PU_STATIC, &mobj_array);
             struct doomsat_mobj *thing_arr_ptr = mobj_array;
             for (struct thinker_s *ptr = thinkercap.next;
                  ptr != thinkercap_original; ptr = ptr->next)
@@ -150,9 +151,9 @@ doomsat_GetState (void)
         }
     if (state_numsectors > 0)
         {
-            sector_array = Z_Malloc (
-                sizeof (struct doomsat_sector) * state_numsectors, PU_STATIC,
-                &sector_array);
+            sector_array
+                = Z_Malloc (sizeof (struct doomsat_sector) * state_numsectors,
+                            PU_STATIC, &sector_array);
             struct doomsat_sector *sector_arr_ptr = sector_array;
             sector_t *sector_src_ptr = sectors;
             for (int i = 0; i < state_numsectors; i++)
@@ -171,9 +172,9 @@ doomsat_GetState (void)
         }
     if (state_numsides > 0)
         {
-            side_array = Z_Malloc (
-                sizeof (struct doomsat_side) * state_numsides, PU_STATIC,
-                &side_array);
+            side_array
+                = Z_Malloc (sizeof (struct doomsat_side) * state_numsides,
+                            PU_STATIC, &side_array);
             struct doomsat_side *side_arr_ptr = side_array;
             side_t *side_src_ptr = sides;
             for (int i = 0; i < state_numsides; i++)
@@ -192,9 +193,9 @@ doomsat_GetState (void)
         }
     if (state_numlines > 0)
         {
-            line_array = Z_Malloc (
-                sizeof (struct doomsat_line) * state_numlines, PU_STATIC,
-                &line_array);
+            line_array
+                = Z_Malloc (sizeof (struct doomsat_line) * state_numlines,
+                            PU_STATIC, &line_array);
             struct doomsat_line *line_arr_ptr = line_array;
             line_t *line_src_ptr = lines;
             for (int i = 0; i < state_numlines; i++)
@@ -217,6 +218,7 @@ doomsat_GetState (void)
     state.leveltime = leveltime;
     state.paused = paused;
     state.st_palette = st_palette;
+    M_StringCopy (state.pagename, pagename, sizeof (state.pagename));
 
     state.viewx = viewx;
     state.viewy = viewy;
@@ -258,8 +260,10 @@ doomsat_GetState (void)
     AM_DoomsatGetState (&state);
 
     state.menuactive = menuactive;
-    state.menuid = M_DoomsatWireMenu();
-    M_DoomsatWireDialog(&state);
+    state.menuid = M_DoomsatWireMenu ();
+    M_DoomsatWireDialog (&state);
+
+    WI_DoomsatGetState (&state);
 
     state.sectors_length = state_numsectors;
     state.sectors = sector_array;
@@ -279,7 +283,9 @@ doomsat_GetState (void)
 #if DOOMSAT_DOOMCLIENT
 mobj_t *mobj_storage = NULL;
 int last_map = INT_MIN;
+int last_gamestate = INT_MIN;
 
+char pagename_storage[9];
 void
 doomsat_LoadState (struct doomsat_state state)
 {
@@ -302,6 +308,8 @@ doomsat_LoadState (struct doomsat_state state)
             st_palette = state.st_palette;
             ST_DoomsatLoadPalette ();
         }
+    memcpy(pagename_storage, state.pagename, sizeof(pagename_storage));
+    pagename = pagename_storage;
 
     if (state.gamestate != GS_LEVEL)
         {
@@ -373,8 +381,13 @@ doomsat_LoadState (struct doomsat_state state)
     automapactive = state.automapactive;
     AM_DoomsatLoadState (&state);
 
-    M_DoomsatLoadMenu(state.menuid);
-    M_DoomsatLoadDialog(&state);
+    M_DoomsatLoadMenu (state.menuid);
+    M_DoomsatLoadDialog (&state);
+
+    WI_DoomsatLoadState (&state);
+    if (state.wi_state != last_gamestate)
+        WI_loadData ();
+    last_gamestate = state.wi_state;
 
     if (state.sectors_length != numsectors)
         I_Error ("sector count mismatch");

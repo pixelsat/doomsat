@@ -77,6 +77,7 @@ struct doomsat_state
     int leveltime;
     boolean paused;
     int st_palette;
+    char pagename[9];
 
     int viewx;
     int viewy;
@@ -129,6 +130,20 @@ struct doomsat_state
     int menu_messageToPrint;
     int menu_dialog_length;
     char menu_dialog[160];
+
+    int wi_state;
+    int wi_epsd;
+    boolean wi_didsecret;
+    int wi_last;
+    int wi_next;
+    int wi_cnt_kills;
+    int wi_cnt_items;
+    int wi_cnt_secret;
+    int wi_cnt_time;
+    int wi_cnt_par;
+
+    boolean wi_snl_pointeron;
+    int wi_anim_ctr[10];
 
     int sectors_length;
     const struct doomsat_sector *sectors;
