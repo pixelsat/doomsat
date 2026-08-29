@@ -218,7 +218,10 @@ doomsat_GetState (void)
     state.leveltime = leveltime;
     state.paused = paused;
     state.st_palette = st_palette;
-    M_StringCopy (state.pagename, pagename, sizeof (state.pagename));
+    if (pagename == NULL)
+        state.pagename[0] = '\0';
+    else
+        M_StringCopy (state.pagename, pagename, sizeof (state.pagename));
 
     state.viewx = viewx;
     state.viewy = viewy;

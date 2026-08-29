@@ -79,7 +79,7 @@ fn main() {
         let state = doom.get_state();
         state
             .with_serialized(|s| {
-                let len = dbg!(s.len()) as u32;
+                let len = s.len() as u32;
                 socket.write_all(&len.to_le_bytes())?;
                 socket.write_all(s)
             })

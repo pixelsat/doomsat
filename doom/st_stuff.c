@@ -30,6 +30,7 @@
 #include "deh_main.h"
 #include "deh_misc.h"
 #include "doomdef.h"
+#include "doomsat_config.h"
 #include "doomkeys.h"
 
 #include "g_game.h"
@@ -1049,8 +1050,10 @@ ST_Drawer (boolean fullscreen, boolean refresh)
     st_statusbaron = (!fullscreen) || automapactive;
     st_firsttime = st_firsttime || refresh;
 
-    // Do red-/gold-shifts from damage/items
+    // The client applies the authoritative palette from doomsat_state.
+#if !DOOMSAT_DOOMCLIENT
     ST_doPaletteStuff ();
+#endif
 
     // If just after ST_Start(), refresh all
     if (st_firsttime)
