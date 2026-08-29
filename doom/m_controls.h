@@ -16,7 +16,7 @@
 
 #ifndef __M_CONTROLS_H__
 #define __M_CONTROLS_H__
- 
+
 extern int key_right;
 extern int key_left;
 
@@ -30,7 +30,7 @@ extern int key_strafe;
 extern int key_speed;
 
 extern int key_jump;
- 
+
 extern int key_flyup;
 extern int key_flydown;
 extern int key_flycenter;
@@ -153,16 +153,15 @@ extern int joybmenu;
 
 extern int dclick_use;
 
-void M_BindBaseControls(void);
-void M_BindHereticControls(void);
-void M_BindHexenControls(void);
-void M_BindStrifeControls(void);
-void M_BindWeaponControls(void);
-void M_BindMapControls(void);
-void M_BindMenuControls(void);
-void M_BindChatControls(unsigned int num_players);
+void M_BindBaseControls (void);
+void M_BindHereticControls (void);
+void M_BindHexenControls (void);
+void M_BindStrifeControls (void);
+void M_BindWeaponControls (void);
+void M_BindMapControls (void);
+void M_BindMenuControls (void);
+void M_BindChatControls (unsigned int num_players);
 
-void M_ApplyPlatformDefaults(void);
+void M_ApplyPlatformDefaults (void);
 
 #endif /* #ifndef __M_CONTROLS_H__ */
-

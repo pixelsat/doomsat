@@ -20,11 +20,10 @@
 //     DMXGUS lump into an equivalent Timidity configuration file.
 //
 
-
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "w_wad.h"
 #include "z_zone.h"
@@ -40,25 +39,27 @@ typedef struct
 char *gus_patch_path = "";
 unsigned int gus_ram_kb = 1024;
 
-static unsigned int MappingIndex(void)
+static unsigned int
+MappingIndex (void)
 {
     unsigned int result = gus_ram_kb / 256;
 
     if (result < 1)
-    {
-        return 1;
-    }
+        {
+            return 1;
+        }
     else if (result > 4)
-    {
-        return 4;
-    }
+        {
+            return 4;
+        }
     else
-    {
-        return result;
-    }
+        {
+            return result;
+        }
 }
 
-static int SplitLine(char *line, char **fields, unsigned int max_fields)
+static int
+SplitLine (char *line, char **fields, unsigned int max_fields)
 {
     unsigned int num_fields;
     char *p;
@@ -67,112 +68,117 @@ static int SplitLine(char *line, char **fields, unsigned int max_fields)
     num_fields = 1;
 
     for (p = line; *p != '\0'; ++p)
-    {
-        if (*p == ',')
         {
-            *p = '\0';
+            if (*p == ',')
+                {
+                    *p = '\0';
 
-            // Skip spaces following the comma.
-            do
-            {
-                ++p;
-            } while (*p != '\0' && isspace(*p));
+                    // Skip spaces following the comma.
+                    do
+                        {
+                            ++p;
+                        }
+                    while (*p != '\0' && isspace (*p));
 
-            fields[num_fields] = p;
-            ++num_fields;
-            --p;
+                    fields[num_fields] = p;
+                    ++num_fields;
+                    --p;
 
-            if (num_fields >= max_fields)
-            {
-                break;
-            }
+                    if (num_fields >= max_fields)
+                        {
+                            break;
+                        }
+                }
+            else if (*p == '#')
+                {
+                    *p = '\0';
+                    break;
+                }
         }
-        else if (*p == '#')
-        {
-            *p = '\0';
-            break;
-        }
-    }
 
     // Strip off trailing whitespace from the end of the line.
-    p = fields[num_fields - 1] + strlen(fields[num_fields - 1]);
-    while (p > fields[num_fields - 1] && isspace(*(p - 1)))
-    {
-        --p;
-        *p = '\0';
-    }
+    p = fields[num_fields - 1] + strlen (fields[num_fields - 1]);
+    while (p > fields[num_fields - 1] && isspace (*(p - 1)))
+        {
+            --p;
+            *p = '\0';
+        }
 
     return num_fields;
 }
 
-static void ParseLine(gus_config_t *config, char *line)
+static void
+ParseLine (gus_config_t *config, char *line)
 {
     char *fields[6];
     unsigned int num_fields;
     unsigned int instr_id, mapped_id;
 
-    num_fields = SplitLine(line, fields, 6);
+    num_fields = SplitLine (line, fields, 6);
 
     if (num_fields < 6)
-    {
-        return;
-    }
+        {
+            return;
+        }
 
-    instr_id = atoi(fields[0]);
-    mapped_id = atoi(fields[MappingIndex()]);
+    instr_id = atoi (fields[0]);
+    mapped_id = atoi (fields[MappingIndex ()]);
 
-    free(config->patch_names[instr_id]);
-    config->patch_names[instr_id] = strdup(fields[5]);
+    free (config->patch_names[instr_id]);
+    config->patch_names[instr_id] = strdup (fields[5]);
     config->mapping[instr_id] = mapped_id;
 }
 
-static void ParseDMXConfig(char *dmxconf, gus_config_t *config)
+static void
+ParseDMXConfig (char *dmxconf, gus_config_t *config)
 {
     char *p, *newline;
     unsigned int i;
 
-    memset(config, 0, sizeof(gus_config_t));
+    memset (config, 0, sizeof (gus_config_t));
 
     for (i = 0; i < MAX_INSTRUMENTS; ++i)
-    {
-        config->mapping[i] = -1;
-    }
+        {
+            config->mapping[i] = -1;
+        }
 
     p = dmxconf;
 
     for (;;)
-    {
-        newline = strchr(p, '\n');
-
-        if (newline != NULL)
         {
-            *newline = '\0';
-        }
+            newline = strchr (p, '\n');
 
-        ParseLine(config, p);
+            if (newline != NULL)
+                {
+                    *newline = '\0';
+                }
 
-        if (newline == NULL)
-        {
-            break;
+            ParseLine (config, p);
+
+            if (newline == NULL)
+                {
+                    break;
+                }
+            else
+                {
+                    p = newline + 1;
+                }
         }
-        else
-        {
-            p = newline + 1;
-        }
-    }
 }
 
-static void FreeDMXConfig(gus_config_t *config)
+static void
+FreeDMXConfig (gus_config_t *config)
 {
     unsigned int i;
 
     for (i = 0; i < MAX_INSTRUMENTS; ++i)
-    {
-        free(config->patch_names[i]);
-    }
+        {
+            free (config->patch_names[i]);
+        }
 }
 
-static char *ReadDMXConfig(void)
+static char *
+ReadDMXConfig (void)
 {
     int lumpnum;
     unsigned int len;
@@ -180,92 +186,93 @@ static char *ReadDMXConfig(void)
 
     // TODO: This should be chosen based on gamemode == commercial:
 
-    lumpnum = W_CheckNumForName("DMXGUS");
+    lumpnum = W_CheckNumForName ("DMXGUS");
 
     if (lumpnum < 0)
-    {
-        lumpnum = W_GetNumForName("DMXGUSC");
-    }
+        {
+            lumpnum = W_GetNumForName ("DMXGUSC");
+        }
 
-    len = W_LumpLength(lumpnum);
-    data = Z_Malloc(len + 1, PU_STATIC, NULL);
-    W_ReadLump(lumpnum, data);
+    len = W_LumpLength (lumpnum);
+    data = Z_Malloc (len + 1, PU_STATIC, NULL);
+    W_ReadLump (lumpnum, data);
 
     return data;
 }
 
-static boolean WriteTimidityConfig(char *path, gus_config_t *config)
+static boolean
+WriteTimidityConfig (char *path, gus_config_t *config)
 {
     FILE *fstream;
     unsigned int i;
 
-    fstream = fopen(path, "w");
+    fstream = fopen (path, "w");
 
     if (fstream == NULL)
-    {
-        return false;
-    }
+        {
+            return false;
+        }
 
-    fprintf(fstream, "# Autogenerated Timidity config.\n\n");
+    fprintf (fstream, "# Autogenerated Timidity config.\n\n");
 
-    fprintf(fstream, "dir %s\n", gus_patch_path);
+    fprintf (fstream, "dir %s\n", gus_patch_path);
 
-    fprintf(fstream, "\nbank 0\n\n");
+    fprintf (fstream, "\nbank 0\n\n");
 
     for (i = 0; i < 128; ++i)
-    {
-        if (config->mapping[i] >= 0 && config->mapping[i] < MAX_INSTRUMENTS
-         && config->patch_names[config->mapping[i]] != NULL)
         {
-            fprintf(fstream, "%i %s\n",
-                    i, config->patch_names[config->mapping[i]]);
+            if (config->mapping[i] >= 0 && config->mapping[i] < MAX_INSTRUMENTS
+                && config->patch_names[config->mapping[i]] != NULL)
+                {
+                    fprintf (fstream, "%i %s\n", i,
+                             config->patch_names[config->mapping[i]]);
+                }
         }
-    }
 
-    fprintf(fstream, "\ndrumset 0\n\n");
+    fprintf (fstream, "\ndrumset 0\n\n");
 
     for (i = 128 + 25; i < MAX_INSTRUMENTS; ++i)
-    {
-        if (config->mapping[i] >= 0 && config->mapping[i] < MAX_INSTRUMENTS
-         && config->patch_names[config->mapping[i]] != NULL)
         {
-            fprintf(fstream, "%i %s\n",
-                    i - 128, config->patch_names[config->mapping[i]]);
+            if (config->mapping[i] >= 0 && config->mapping[i] < MAX_INSTRUMENTS
+                && config->patch_names[config->mapping[i]] != NULL)
+                {
+                    fprintf (fstream, "%i %s\n", i - 128,
+                             config->patch_names[config->mapping[i]]);
+                }
         }
-    }
 
-    fprintf(fstream, "\n");
+    fprintf (fstream, "\n");
 
-    fclose(fstream);
+    fclose (fstream);
 
     return true;
 }
 
-boolean GUS_WriteConfig(char *path)
+boolean
+GUS_WriteConfig (char *path)
 {
     boolean result;
     char *dmxconf;
     gus_config_t config;
 
-    if (!strcmp(gus_patch_path, ""))
-    {
-        printf("You haven't configured gus_patch_path.\n");
-        printf("gus_patch_path needs to point to the location of "
-               "your GUS patch set.\n"
-               "To get a copy of the \"standard\" GUS patches, "
-               "download a copy of dgguspat.zip.\n");
+    if (!strcmp (gus_patch_path, ""))
+        {
+            printf ("You haven't configured gus_patch_path.\n");
+            printf ("gus_patch_path needs to point to the location of "
+                    "your GUS patch set.\n"
+                    "To get a copy of the \"standard\" GUS patches, "
+                    "download a copy of dgguspat.zip.\n");
 
-        return false;
-    }
+            return false;
+        }
 
-    dmxconf = ReadDMXConfig();
-    ParseDMXConfig(dmxconf, &config);
+    dmxconf = ReadDMXConfig ();
+    ParseDMXConfig (dmxconf, &config);
 
-    result = WriteTimidityConfig(path, &config);
+    result = WriteTimidityConfig (path, &config);
 
-    FreeDMXConfig(&config);
-    Z_Free(dmxconf);
+    FreeDMXConfig (&config);
+    Z_Free (dmxconf);
 
     return result;
 }
-

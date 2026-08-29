@@ -26,13 +26,13 @@
 #include "deh_str.h"
 #include "doomkeys.h"
 #include "doomsat.h"
+#include "doomsat_config.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_config.h"
 #include "m_misc.h"
 #include "w_wad.h"
 #include "z_zone.h"
-#include "doomsat_config.h"
 
 static const iwad_t iwads[] = {
     { "doom2.wad", doom2, commercial, "Doom II" },
@@ -50,7 +50,7 @@ static const iwad_t iwads[] = {
     { "heretic1.wad", heretic, shareware, "Heretic Shareware" },
     { "hexen.wad", hexen, commercial, "Hexen" },
     //{ "strife0.wad",  strife,    commercial, "Strife" }, // haleyjd:
-    //STRIFE-FIXME
+    // STRIFE-FIXME
     { "strife1.wad", strife, commercial, "Strife" },
 };
 

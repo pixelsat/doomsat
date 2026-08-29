@@ -16,12 +16,12 @@
 //
 
 #ifndef NET_DEFS_H
-#define NET_DEFS_H 
+#define NET_DEFS_H
 
 #include <stdio.h>
 
-#include "doomtype.h"
 #include "d_ticcmd.h"
+#include "doomtype.h"
 #include "sha1.h"
 
 // Absolute maximum number of "nodes" in the game.  This is different to
@@ -61,33 +61,33 @@ struct _net_module_s
 {
     // Initialize this module for use as a client
 
-    boolean (*InitClient)(void);
+    boolean (*InitClient) (void);
 
     // Initialize this module for use as a server
 
-    boolean (*InitServer)(void);
+    boolean (*InitServer) (void);
 
     // Send a packet
 
-    void (*SendPacket)(net_addr_t *addr, net_packet_t *packet);
+    void (*SendPacket) (net_addr_t *addr, net_packet_t *packet);
 
     // Check for new packets to receive
     //
     // Returns true if packet received
 
-    boolean (*RecvPacket)(net_addr_t **addr, net_packet_t **packet);
+    boolean (*RecvPacket) (net_addr_t **addr, net_packet_t **packet);
 
     // Converts an address to a string
 
-    void (*AddrToString)(net_addr_t *addr, char *buffer, int buffer_len);
+    void (*AddrToString) (net_addr_t *addr, char *buffer, int buffer_len);
 
     // Free back an address when no longer in use
 
-    void (*FreeAddress)(net_addr_t *addr);
+    void (*FreeAddress) (net_addr_t *addr);
 
     // Try to resolve a name to an address
 
-    net_addr_t *(*ResolveAddress)(char *addr);
+    net_addr_t *(*ResolveAddress) (char *addr);
 };
 
 // net_addr_t
@@ -176,7 +176,7 @@ typedef struct
     int new_sync;
     int timelimit;
     int loadgame;
-    int random;  // [Strife only]
+    int random; // [Strife only]
 
     // These fields are only used by the server when sending a game
     // start message:
@@ -190,14 +190,14 @@ typedef struct
 
 } net_gamesettings_t;
 
-#define NET_TICDIFF_FORWARD      (1 << 0)
-#define NET_TICDIFF_SIDE         (1 << 1)
-#define NET_TICDIFF_TURN         (1 << 2)
-#define NET_TICDIFF_BUTTONS      (1 << 3)
-#define NET_TICDIFF_CONSISTANCY  (1 << 4)
-#define NET_TICDIFF_CHATCHAR     (1 << 5)
-#define NET_TICDIFF_RAVEN        (1 << 6)
-#define NET_TICDIFF_STRIFE       (1 << 7)
+#define NET_TICDIFF_FORWARD (1 << 0)
+#define NET_TICDIFF_SIDE (1 << 1)
+#define NET_TICDIFF_TURN (1 << 2)
+#define NET_TICDIFF_BUTTONS (1 << 3)
+#define NET_TICDIFF_CONSISTANCY (1 << 4)
+#define NET_TICDIFF_CHATCHAR (1 << 5)
+#define NET_TICDIFF_RAVEN (1 << 6)
+#define NET_TICDIFF_STRIFE (1 << 7)
 
 typedef struct
 {
@@ -207,7 +207,7 @@ typedef struct
 
 // Complete set of ticcmds from all players
 
-typedef struct 
+typedef struct
 {
     signed int latency;
     unsigned int seq;

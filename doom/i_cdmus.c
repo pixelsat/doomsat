@@ -35,7 +35,8 @@ static const char *cd_name = NULL;
 
 int cd_Error;
 
-int I_CDMusInit(void)
+int
+I_CDMusInit (void)
 {
 #ifdef ORIGCODE
     int drive_num = 0;
@@ -45,41 +46,41 @@ int I_CDMusInit(void)
     // the status of the drive.
 
     if (cd_handle == NULL)
-    {
-        if (SDL_Init(SDL_INIT_CDROM) < 0)
         {
-            startup_error = "Failed to init CD subsystem.";
+            if (SDL_Init (SDL_INIT_CDROM) < 0)
+                {
+                    startup_error = "Failed to init CD subsystem.";
+                    cd_Error = 1;
+                    return -1;
+                }
+
+            // TODO: config variable to control CDROM to use.
+
+            cd_handle = SDL_CDOpen (drive_num);
+
+            if (cd_handle == NULL)
+                {
+                    startup_error = "Failed to open CD-ROM drive.";
+                    cd_Error = 1;
+                    return -1;
+                }
+
+            cd_name = SDL_CDName (drive_num);
+        }
+
+    if (SDL_CDStatus (cd_handle) == CD_ERROR)
+        {
+            startup_error = "Failed to read CD status.";
             cd_Error = 1;
             return -1;
         }
 
-        // TODO: config variable to control CDROM to use.
-
-        cd_handle = SDL_CDOpen(drive_num);
-
-        if (cd_handle == NULL)
+    if (!CD_INDRIVE (cd_handle->status))
         {
-            startup_error = "Failed to open CD-ROM drive.";
+            startup_error = "No CD in drive.";
             cd_Error = 1;
             return -1;
         }
-
-        cd_name = SDL_CDName(drive_num);
-    }
-
-    if (SDL_CDStatus(cd_handle) == CD_ERROR)
-    {
-        startup_error = "Failed to read CD status.";
-        cd_Error = 1;
-        return -1;
-    }
-
-    if (!CD_INDRIVE(cd_handle->status))
-    {
-        startup_error = "No CD in drive.";
-        cd_Error = 1;
-        return -1;
-    }
 
     cd_Error = 0;
 #endif
@@ -89,75 +90,80 @@ int I_CDMusInit(void)
 // We cannot print status messages inline during startup, they must
 // be deferred until after I_CDMusInit has returned.
 
-void I_CDMusPrintStartup(void)
+void
+I_CDMusPrintStartup (void)
 {
 #ifdef ORIGCODE
     if (cd_name != NULL)
-    {
-        printf("I_CDMusInit: Using CD-ROM drive: %s\n", cd_name);
-    }
+        {
+            printf ("I_CDMusInit: Using CD-ROM drive: %s\n", cd_name);
+        }
 
     if (startup_error != NULL)
-    {
-        fprintf(stderr, "I_CDMusInit: %s\n", startup_error);
-    }
+        {
+            fprintf (stderr, "I_CDMusInit: %s\n", startup_error);
+        }
 #endif
 }
 
-int I_CDMusPlay(int track)
+int
+I_CDMusPlay (int track)
 {
 #ifdef ORIGCODE
     int result;
 
     if (cd_handle == NULL)
-    {
-        cd_Error = 1;
-        return -1;
-    }
+        {
+            cd_Error = 1;
+            return -1;
+        }
 
     // Play one track
     // Track is indexed from 1.
 
-    result = SDL_CDPlayTracks(cd_handle, track - 1, 0, 1, 0);
+    result = SDL_CDPlayTracks (cd_handle, track - 1, 0, 1, 0);
 
     cd_Error = 0;
     return result;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-int I_CDMusStop(void)
+int
+I_CDMusStop (void)
 {
 #ifdef ORIGCODE
     int result;
 
-    result = SDL_CDStop(cd_handle);
+    result = SDL_CDStop (cd_handle);
 
     cd_Error = 0;
 
     return result;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-int I_CDMusResume(void)
+int
+I_CDMusResume (void)
 {
 #ifdef ORIGCODE
     int result;
 
-    result = SDL_CDResume(cd_handle);
+    result = SDL_CDResume (cd_handle);
 
     cd_Error = 0;
 
     return result;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-int I_CDMusSetVolume(int volume)
+int
+I_CDMusSetVolume (int volume)
 {
     /* Not supported yet */
 
@@ -166,66 +172,69 @@ int I_CDMusSetVolume(int volume)
     return 0;
 }
 
-int I_CDMusFirstTrack(void)
+int
+I_CDMusFirstTrack (void)
 {
 #ifdef ORIGCODE
     int i;
 
     if (cd_handle == NULL)
-    {
-        cd_Error = 1;
-        return -1;
-    }
+        {
+            cd_Error = 1;
+            return -1;
+        }
 
     // Find the first audio track.
 
-    for (i=0; i<cd_handle->numtracks; ++i) 
-    {
-        if (cd_handle->track[i].type == SDL_AUDIO_TRACK)
+    for (i = 0; i < cd_handle->numtracks; ++i)
         {
-            cd_Error = 0;
+            if (cd_handle->track[i].type == SDL_AUDIO_TRACK)
+                {
+                    cd_Error = 0;
 
-            // Tracks are indexed from 1.
-            return i + 1;
+                    // Tracks are indexed from 1.
+                    return i + 1;
+                }
         }
-    }
 
     // Don't know?
     cd_Error = 1;
 
     return -1;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-int I_CDMusLastTrack(void)
+int
+I_CDMusLastTrack (void)
 {
 #ifdef ORIGCODE
     if (cd_handle == NULL)
-    {
-        cd_Error = 1;
-        return -1;
-    }
+        {
+            cd_Error = 1;
+            return -1;
+        }
 
     cd_Error = 0;
 
     return cd_handle->numtracks;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
-int I_CDMusTrackLength(int track_num)
+int
+I_CDMusTrackLength (int track_num)
 {
 #ifdef ORIGCODE
     SDL_CDtrack *track;
 
     if (cd_handle == NULL || track_num < 1 || track_num > cd_handle->numtracks)
-    {
-        cd_Error = 1;
-        return -1;
-    }
+        {
+            cd_Error = 1;
+            return -1;
+        }
 
     // Track number is indexed from 1.
 
@@ -237,7 +246,6 @@ int I_CDMusTrackLength(int track_num)
 
     return (track->length + CD_FPS - 1) / CD_FPS;
 #else
-	return 0;
+    return 0;
 #endif
 }
-

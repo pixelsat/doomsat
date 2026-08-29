@@ -19,7 +19,7 @@
 #ifndef __WI_STUFF__
 #define __WI_STUFF__
 
-//#include "v_video.h"
+// #include "v_video.h"
 
 #include "doomdef.h"
 
@@ -40,13 +40,13 @@ void WI_Ticker (void);
 void WI_Drawer (void);
 
 // Setup for an intermission screen.
-void WI_Start(wbstartstruct_t*	 wbstartstruct);
+void WI_Start (wbstartstruct_t *wbstartstruct);
 
 // Shut down the intermission screen
-void WI_End(void);
+void WI_End (void);
 
 struct doomsat_state;
-void WI_loadData(void);
-void WI_DoomsatLoadState(struct doomsat_state* ds);
-void WI_DoomsatGetState(struct doomsat_state* ds);
+void WI_loadData (void);
+void WI_DoomsatLoadState (struct doomsat_state *ds);
+void WI_DoomsatGetState (struct doomsat_state *ds);
 #endif

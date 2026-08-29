@@ -1124,7 +1124,8 @@ P_UpdatePicAnimations (int animationtime)
             for (i = anim->basepic; i < anim->basepic + anim->numpics; i++)
                 {
                     pic = anim->basepic
-                          + ((animationtime / anim->speed + i) % anim->numpics);
+                          + ((animationtime / anim->speed + i)
+                             % anim->numpics);
                     if (anim->istexture)
                         texturetranslation[i] = pic;
                     else

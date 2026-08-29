@@ -56,7 +56,8 @@ struct doomsat_mpoint
     int y;
 };
 
-enum doomsat_menu {
+enum doomsat_menu
+{
     DOOMSAT_MENU_NONE,
     DOOMSAT_MENU_MAIN,
     DOOMSAT_MENU_EPISODE,

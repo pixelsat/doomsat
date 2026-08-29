@@ -16,10 +16,10 @@
 //     Common code to parse command line, identifying WAD files to load.
 //
 
-#include "doomfeatures.h"
-#include "d_iwad.h"
-#include "m_argv.h"
 #include "w_main.h"
+#include "d_iwad.h"
+#include "doomfeatures.h"
+#include "m_argv.h"
 #include "w_merge.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -27,14 +27,15 @@
 // Parse the command line, merging WAD files that are sppecified.
 // Returns true if at least one file was added.
 
-boolean W_ParseCommandLine(void)
+boolean
+W_ParseCommandLine (void)
 {
     boolean modifiedgame = false;
     int p;
 
 #ifdef FEATURE_WAD_MERGE
 
-    // Merged PWADs are loaded first, because they are supposed to be 
+    // Merged PWADs are loaded first, because they are supposed to be
     // modified IWADs.
 
     //!
@@ -45,22 +46,22 @@ boolean W_ParseCommandLine(void)
     // into the main IWAD.  Multiple files may be specified.
     //
 
-    p = M_CheckParmWithArgs("-merge", 1);
+    p = M_CheckParmWithArgs ("-merge", 1);
 
     if (p > 0)
-    {
-        for (p = p + 1; p<myargc && myargv[p][0] != '-'; ++p)
         {
-            char *filename;
+            for (p = p + 1; p < myargc && myargv[p][0] != '-'; ++p)
+                {
+                    char *filename;
 
-            modifiedgame = true;
+                    modifiedgame = true;
 
-            filename = D_TryFindWADByName(myargv[p]);
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" merging %s\n", filename);
-            W_MergeFile(filename);
+                    printf (" merging %s\n", filename);
+                    W_MergeFile (filename);
+                }
         }
-    }
 
     // NWT-style merging:
 
@@ -73,23 +74,23 @@ boolean W_ParseCommandLine(void)
     // Simulates the behavior of NWT's -merge option.  Multiple files
     // may be specified.
 
-    p = M_CheckParmWithArgs("-nwtmerge", 1);
+    p = M_CheckParmWithArgs ("-nwtmerge", 1);
 
     if (p > 0)
-    {
-        for (p = p + 1; p<myargc && myargv[p][0] != '-'; ++p)
         {
-            char *filename;
+            for (p = p + 1; p < myargc && myargv[p][0] != '-'; ++p)
+                {
+                    char *filename;
 
-            modifiedgame = true;
+                    modifiedgame = true;
 
-            filename = D_TryFindWADByName(myargv[p]);
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" performing NWT-style merge of %s\n", filename);
-            W_NWTDashMerge(filename);
+                    printf (" performing NWT-style merge of %s\n", filename);
+                    W_NWTDashMerge (filename);
+                }
         }
-    }
-    
+
     // Add flats
 
     //!
@@ -100,22 +101,22 @@ boolean W_ParseCommandLine(void)
     // the main IWAD directory.  Multiple files may be specified.
     //
 
-    p = M_CheckParmWithArgs("-af", 1);
+    p = M_CheckParmWithArgs ("-af", 1);
 
     if (p > 0)
-    {
-        for (p = p + 1; p<myargc && myargv[p][0] != '-'; ++p)
         {
-            char *filename;
+            for (p = p + 1; p < myargc && myargv[p][0] != '-'; ++p)
+                {
+                    char *filename;
 
-            modifiedgame = true;
+                    modifiedgame = true;
 
-            filename = D_TryFindWADByName(myargv[p]);
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" merging flats from %s\n", filename);
-            W_NWTMergeFile(filename, W_NWT_MERGE_FLATS);
+                    printf (" merging flats from %s\n", filename);
+                    W_NWTMergeFile (filename, W_NWT_MERGE_FLATS);
+                }
         }
-    }
 
     //!
     // @arg <files>
@@ -125,21 +126,21 @@ boolean W_ParseCommandLine(void)
     // into the main IWAD directory.  Multiple files may be specified.
     //
 
-    p = M_CheckParmWithArgs("-as", 1);
+    p = M_CheckParmWithArgs ("-as", 1);
 
     if (p > 0)
-    {
-        for (p = p + 1; p<myargc && myargv[p][0] != '-'; ++p)
         {
-            char *filename;
+            for (p = p + 1; p < myargc && myargv[p][0] != '-'; ++p)
+                {
+                    char *filename;
 
-            modifiedgame = true;
-            filename = D_TryFindWADByName(myargv[p]);
+                    modifiedgame = true;
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" merging sprites from %s\n", filename);
-            W_NWTMergeFile(filename, W_NWT_MERGE_SPRITES);
+                    printf (" merging sprites from %s\n", filename);
+                    W_NWTMergeFile (filename, W_NWT_MERGE_SPRITES);
+                }
         }
-    }
 
     //!
     // @arg <files>
@@ -148,22 +149,23 @@ boolean W_ParseCommandLine(void)
     // Equivalent to "-af <files> -as <files>".
     //
 
-    p = M_CheckParmWithArgs("-aa", 1);
+    p = M_CheckParmWithArgs ("-aa", 1);
 
     if (p > 0)
-    {
-        for (p = p + 1; p<myargc && myargv[p][0] != '-'; ++p)
         {
-            char *filename;
+            for (p = p + 1; p < myargc && myargv[p][0] != '-'; ++p)
+                {
+                    char *filename;
 
-            modifiedgame = true;
+                    modifiedgame = true;
 
-            filename = D_TryFindWADByName(myargv[p]);
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" merging sprites and flats from %s\n", filename);
-            W_NWTMergeFile(filename, W_NWT_MERGE_SPRITES | W_NWT_MERGE_FLATS);
+                    printf (" merging sprites and flats from %s\n", filename);
+                    W_NWTMergeFile (filename,
+                                    W_NWT_MERGE_SPRITES | W_NWT_MERGE_FLATS);
+                }
         }
-    }
 
 #endif
 
@@ -176,23 +178,22 @@ boolean W_ParseCommandLine(void)
 
     p = M_CheckParmWithArgs ("-file", 1);
     if (p)
-    {
-	// the parms after p are wadfile/lump names,
-	// until end of parms or another - preceded parm
-	modifiedgame = true;            // homebrew levels
-	while (++p != myargc && myargv[p][0] != '-')
         {
-            char *filename;
+            // the parms after p are wadfile/lump names,
+            // until end of parms or another - preceded parm
+            modifiedgame = true; // homebrew levels
+            while (++p != myargc && myargv[p][0] != '-')
+                {
+                    char *filename;
 
-            filename = D_TryFindWADByName(myargv[p]);
+                    filename = D_TryFindWADByName (myargv[p]);
 
-            printf(" adding %s\n", filename);
-	    W_AddFile(filename);
+                    printf (" adding %s\n", filename);
+                    W_AddFile (filename);
+                }
         }
-    }
 
-//    W_PrintDirectory();
+    //    W_PrintDirectory();
 
     return modifiedgame;
 }
-

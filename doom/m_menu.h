@@ -16,11 +16,8 @@
 //   Menu widget stuff, episode selection and such.
 //
 
-
 #ifndef __M_MENU__
 #define __M_MENU__
-
-
 
 #include "d_event.h"
 
@@ -33,7 +30,6 @@
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
 boolean M_Responder (event_t *ev);
-
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -51,15 +47,13 @@ void M_Init (void);
 // does nothing if menu is already up.
 void M_StartControlPanel (void);
 
-
-
 extern int detailLevel;
 extern int screenblocks;
 
 enum doomsat_menu;
 struct doomsat_state;
-enum doomsat_menu M_DoomsatWireMenu(void);
-void M_DoomsatLoadMenu(enum doomsat_menu menu);
-void M_DoomsatWireDialog(struct doomsat_state *state);
-void M_DoomsatLoadDialog(struct doomsat_state *state);
+enum doomsat_menu M_DoomsatWireMenu (void);
+void M_DoomsatLoadMenu (enum doomsat_menu menu);
+void M_DoomsatWireDialog (struct doomsat_state *state);
+void M_DoomsatLoadDialog (struct doomsat_state *state);
 #endif

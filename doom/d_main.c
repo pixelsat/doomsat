@@ -19,7 +19,6 @@
 //	and call the startup functions.
 //
 
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,17 +30,17 @@
 #include "doomgeneric.h"
 #include "doomstat.h"
 
-#include "dstrings.h"
 #include "doomfeatures.h"
+#include "dstrings.h"
 #include "sounds.h"
 
 #include "d_iwad.h"
 
-#include "z_zone.h"
-#include "w_main.h"
-#include "w_wad.h"
 #include "s_sound.h"
 #include "v_video.h"
+#include "w_main.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 #include "f_finale.h"
 #include "f_wipe.h"
@@ -49,8 +48,8 @@
 #include "m_argv.h"
 #include "m_config.h"
 #include "m_controls.h"
-#include "m_misc.h"
 #include "m_menu.h"
+#include "m_misc.h"
 #include "p_saveg.h"
 
 #include "i_endoom.h"
@@ -61,13 +60,13 @@
 
 #include "g_game.h"
 
-#include "hu_stuff.h"
-#include "wi_stuff.h"
-#include "st_stuff.h"
 #include "am_map.h"
+#include "hu_stuff.h"
 #include "net_client.h"
 #include "net_dedicated.h"
 #include "net_query.h"
+#include "st_stuff.h"
+#include "wi_stuff.h"
 
 #include "p_setup.h"
 #include "r_local.h"
@@ -88,73 +87,68 @@ void D_DoomLoop (void);
 
 // Location where savegames are stored
 
-char *          savegamedir;
+char *savegamedir;
 
 // location of IWAD and WAD files
 
-char *          iwadfile;
+char *iwadfile;
 
+boolean devparm;     // started game with -devparm
+boolean nomonsters;  // checkparm of -nomonsters
+boolean respawnparm; // checkparm of -respawn
+boolean fastparm;    // checkparm of -fast
 
-boolean		devparm;	// started game with -devparm
-boolean         nomonsters;	// checkparm of -nomonsters
-boolean         respawnparm;	// checkparm of -respawn
-boolean         fastparm;	// checkparm of -fast
+// extern int soundVolume;
+// extern  int	sfxVolume;
+// extern  int	musicVolume;
 
-//extern int soundVolume;
-//extern  int	sfxVolume;
-//extern  int	musicVolume;
+extern boolean inhelpscreens;
 
-extern  boolean	inhelpscreens;
+skill_t startskill;
+int startepisode;
+int startmap;
+boolean autostart;
+int startloadgame;
 
-skill_t		startskill;
-int             startepisode;
-int		startmap;
-boolean		autostart;
-int             startloadgame;
-
-boolean		advancedemo;
+boolean advancedemo;
 
 // Store demo, do not accept any inputs
-boolean         storedemo;
+boolean storedemo;
 
 // "BFG Edition" version of doom2.wad does not include TITLEPIC.
-boolean         bfgedition;
+boolean bfgedition;
 
 // If true, the main game loop has started.
-boolean         main_loop_started = false;
+boolean main_loop_started = false;
 
-char		wadfile[1024];		// primary wad file
-char		mapdir[1024];           // directory of development maps
+char wadfile[1024]; // primary wad file
+char mapdir[1024];  // directory of development maps
 
-int             show_endoom = 1;
+int show_endoom = 1;
 
-
-void D_ConnectNetGame(void);
-void D_CheckNetGame(void);
-
+void D_ConnectNetGame (void);
+void D_CheckNetGame (void);
 
 //
 // D_ProcessEvents
 // Send all the events of the given timestamp down the responder chain
 //
-void D_ProcessEvents (void)
+void
+D_ProcessEvents (void)
 {
-    event_t*	ev;
+    event_t *ev;
 
     // IF STORE DEMO, DO NOT ACCEPT INPUT
     if (storedemo)
         return;
 
-    while ((ev = D_PopEvent()) != NULL)
-    {
-	if (M_Responder (ev))
-	    continue;               // menu ate the event
-	G_Responder (ev);
-    }
+    while ((ev = D_PopEvent ()) != NULL)
+        {
+            if (M_Responder (ev))
+                continue; // menu ate the event
+            G_Responder (ev);
+        }
 }
-
-
-
 
 //
 // D_Display
@@ -162,120 +156,121 @@ void D_ProcessEvents (void)
 //
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
-gamestate_t     wipegamestate = GS_DEMOSCREEN;
-extern  boolean setsizeneeded;
-extern  int             showMessages;
+gamestate_t wipegamestate = GS_DEMOSCREEN;
+extern boolean setsizeneeded;
+extern int showMessages;
 void R_ExecuteSetViewSize (void);
 
-void D_Display (void)
+void
+D_Display (void)
 {
-    static  boolean		viewactivestate = false;
-    static  boolean		menuactivestate = false;
-    static  boolean		inhelpscreensstate = false;
-    static  boolean		fullscreen = false;
-    static  gamestate_t		oldgamestate = -1;
-    static  int			borderdrawcount;
-    int				nowtime;
-    int				tics;
-    int				wipestart;
-    int				y;
-    boolean			done;
-    boolean			wipe;
-    boolean			redrawsbar;
+    static boolean viewactivestate = false;
+    static boolean menuactivestate = false;
+    static boolean inhelpscreensstate = false;
+    static boolean fullscreen = false;
+    static gamestate_t oldgamestate = -1;
+    static int borderdrawcount;
+    int nowtime;
+    int tics;
+    int wipestart;
+    int y;
+    boolean done;
+    boolean wipe;
+    boolean redrawsbar;
 
     if (nodrawers)
-    	return;                    // for comparative timing / profiling
+        return; // for comparative timing / profiling
 
     redrawsbar = false;
 
     // change the view size if needed
     if (setsizeneeded)
-    {
-		R_ExecuteSetViewSize ();
-		oldgamestate = -1;                      // force background redraw
-		borderdrawcount = 3;
-    }
+        {
+            R_ExecuteSetViewSize ();
+            oldgamestate = -1; // force background redraw
+            borderdrawcount = 3;
+        }
 
     // save the current screen if about to wipe
     if (gamestate != wipegamestate)
-		{
-		wipe = true;
-		wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
-    }
+        {
+            wipe = true;
+            wipe_StartScreen (0, 0, SCREENWIDTH, SCREENHEIGHT);
+        }
     else
-    	wipe = false;
+        wipe = false;
 
     if (gamestate == GS_LEVEL && gametic)
-    	HU_Erase();
+        HU_Erase ();
 
     // do buffered drawing
     switch (gamestate)
-    {
-      case GS_LEVEL:
-		if (!gametic)
-			break;
-		if (automapactive)
-			AM_Drawer ();
-		if (wipe || (viewheight != 200 && fullscreen) )
-			redrawsbar = true;
-		if (inhelpscreensstate && !inhelpscreens)
-			redrawsbar = true;              // just put away the help screen
-		ST_Drawer (viewheight == 200, redrawsbar );
-		fullscreen = viewheight == 200;
-		break;
+        {
+        case GS_LEVEL:
+            if (!gametic)
+                break;
+            if (automapactive)
+                AM_Drawer ();
+            if (wipe || (viewheight != 200 && fullscreen))
+                redrawsbar = true;
+            if (inhelpscreensstate && !inhelpscreens)
+                redrawsbar = true; // just put away the help screen
+            ST_Drawer (viewheight == 200, redrawsbar);
+            fullscreen = viewheight == 200;
+            break;
 
-      case GS_INTERMISSION:
-		WI_Drawer ();
-		break;
+        case GS_INTERMISSION:
+            WI_Drawer ();
+            break;
 
-      case GS_FINALE:
-		F_Drawer ();
-		break;
+        case GS_FINALE:
+            F_Drawer ();
+            break;
 
-      case GS_DEMOSCREEN:
-		D_PageDrawer ();
-		break;
-    }
+        case GS_DEMOSCREEN:
+            D_PageDrawer ();
+            break;
+        }
 
     // draw buffered stuff to screen
     I_UpdateNoBlit ();
 
     // draw the view directly
     if (gamestate == GS_LEVEL && !automapactive && gametic)
-    	R_RenderPlayerView (&players[displayplayer]);
+        R_RenderPlayerView (&players[displayplayer]);
 
     if (gamestate == GS_LEVEL && gametic)
-    	HU_Drawer ();
+        HU_Drawer ();
 
     // clean up border stuff
     if (gamestate != oldgamestate && gamestate != GS_LEVEL)
-    	I_SetPalette (W_CacheLumpName (DEH_String("PLAYPAL"),PU_CACHE));
+        I_SetPalette (W_CacheLumpName (DEH_String ("PLAYPAL"), PU_CACHE));
 
     // see if the border needs to be initially drawn
     if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
-    {
-		viewactivestate = false;        // view was not active
-		R_FillBackScreen ();    // draw the pattern into the back screen
-    }
+        {
+            viewactivestate = false; // view was not active
+            R_FillBackScreen ();     // draw the pattern into the back screen
+        }
 
     // see if the border needs to be updated to the screen
     if (gamestate == GS_LEVEL && !automapactive && scaledviewwidth != 320)
-    {
-		if (menuactive || menuactivestate || !viewactivestate)
-			borderdrawcount = 3;
-		if (borderdrawcount)
-		{
-			R_DrawViewBorder ();    // erase old menu stuff
-			borderdrawcount--;
-		}
-    }
+        {
+            if (menuactive || menuactivestate || !viewactivestate)
+                borderdrawcount = 3;
+            if (borderdrawcount)
+                {
+                    R_DrawViewBorder (); // erase old menu stuff
+                    borderdrawcount--;
+                }
+        }
 
     if (testcontrols)
-    {
-        // Box showing current mouse speed
+        {
+            // Box showing current mouse speed
 
-        V_DrawMouseSpeedBox(testcontrols_mousespeed);
-    }
+            V_DrawMouseSpeedBox (testcontrols_mousespeed);
+        }
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
@@ -284,70 +279,72 @@ void D_Display (void)
 
     // draw pause pic
     if (paused)
-    {
-		if (automapactive)
-			y = 4;
-		else
-			y = viewwindowy+4;
-		V_DrawPatchDirect(viewwindowx + (scaledviewwidth - 68) / 2, y,
-							  W_CacheLumpName (DEH_String("M_PAUSE"), PU_CACHE));
-    }
-
+        {
+            if (automapactive)
+                y = 4;
+            else
+                y = viewwindowy + 4;
+            V_DrawPatchDirect (
+                viewwindowx + (scaledviewwidth - 68) / 2, y,
+                W_CacheLumpName (DEH_String ("M_PAUSE"), PU_CACHE));
+        }
 
     // menus go directly to the screen
-    M_Drawer ();          // menu is drawn even on top of everything
-    NetUpdate ();         // send out any new accumulation
-
+    M_Drawer ();  // menu is drawn even on top of everything
+    NetUpdate (); // send out any new accumulation
 
     // normal update
     if (!wipe)
-    {
-	I_FinishUpdate ();              // page flip or blit buffer
-	return;
-    }
+        {
+            I_FinishUpdate (); // page flip or blit buffer
+            return;
+        }
 
     // wipe update
-    wipe_EndScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
+    wipe_EndScreen (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
     wipestart = I_GetTime () - 1;
 
     do
-    {
-	do
-	{
-	    nowtime = I_GetTime ();
-	    tics = nowtime - wipestart;
-            I_Sleep(1);
-	} while (tics <= 0);
+        {
+            do
+                {
+                    nowtime = I_GetTime ();
+                    tics = nowtime - wipestart;
+                    I_Sleep (1);
+                }
+            while (tics <= 0);
 
-	wipestart = nowtime;
-	done = wipe_ScreenWipe(wipe_Melt
-			       , 0, 0, SCREENWIDTH, SCREENHEIGHT, tics);
-	I_UpdateNoBlit ();
-	M_Drawer ();                            // menu is drawn even on top of wipes
-	I_FinishUpdate ();                      // page flip or blit buffer
-    } while (!done);
+            wipestart = nowtime;
+            done = wipe_ScreenWipe (wipe_Melt, 0, 0, SCREENWIDTH, SCREENHEIGHT,
+                                    tics);
+            I_UpdateNoBlit ();
+            M_Drawer ();       // menu is drawn even on top of wipes
+            I_FinishUpdate (); // page flip or blit buffer
+        }
+    while (!done);
 }
 
 //
 // Add configuration file variable bindings.
 //
 
-void D_BindVariables(void)
+void
+D_BindVariables (void)
 {
     int i;
 
-    M_ApplyPlatformDefaults();
+    M_ApplyPlatformDefaults ();
 
-    I_BindVideoVariables();
-    I_BindJoystickVariables();
-    I_BindSoundVariables();
+    I_BindVideoVariables ();
+    I_BindJoystickVariables ();
+    I_BindSoundVariables ();
 
-    M_BindBaseControls();
-    M_BindWeaponControls();
-    M_BindMapControls();
-    M_BindMenuControls();
-    M_BindChatControls(MAXPLAYERS);
+    M_BindBaseControls ();
+    M_BindWeaponControls ();
+    M_BindMapControls ();
+    M_BindMenuControls ();
+    M_BindChatControls (MAXPLAYERS);
 
     key_multi_msgplayer[0] = HUSTR_KEYGREEN;
     key_multi_msgplayer[1] = HUSTR_KEYINDIGO;
@@ -355,29 +352,29 @@ void D_BindVariables(void)
     key_multi_msgplayer[3] = HUSTR_KEYRED;
 
 #ifdef FEATURE_MULTIPLAYER
-    NET_BindVariables();
+    NET_BindVariables ();
 #endif
 
-    M_BindVariable("mouse_sensitivity",      &mouseSensitivity);
-    M_BindVariable("sfx_volume",             &sfxVolume);
-    M_BindVariable("music_volume",           &musicVolume);
-    M_BindVariable("show_messages",          &showMessages);
-    M_BindVariable("screenblocks",           &screenblocks);
-    M_BindVariable("detaillevel",            &detailLevel);
-    M_BindVariable("snd_channels",           &snd_channels);
-    M_BindVariable("vanilla_savegame_limit", &vanilla_savegame_limit);
-    M_BindVariable("vanilla_demo_limit",     &vanilla_demo_limit);
-    M_BindVariable("show_endoom",            &show_endoom);
+    M_BindVariable ("mouse_sensitivity", &mouseSensitivity);
+    M_BindVariable ("sfx_volume", &sfxVolume);
+    M_BindVariable ("music_volume", &musicVolume);
+    M_BindVariable ("show_messages", &showMessages);
+    M_BindVariable ("screenblocks", &screenblocks);
+    M_BindVariable ("detaillevel", &detailLevel);
+    M_BindVariable ("snd_channels", &snd_channels);
+    M_BindVariable ("vanilla_savegame_limit", &vanilla_savegame_limit);
+    M_BindVariable ("vanilla_demo_limit", &vanilla_demo_limit);
+    M_BindVariable ("show_endoom", &show_endoom);
 
     // Multiplayer chat macros
 
-    for (i=0; i<10; ++i)
-    {
-        char buf[12];
+    for (i = 0; i < 10; ++i)
+        {
+            char buf[12];
 
-        M_snprintf(buf, sizeof(buf), "chatmacro%i", i);
-        M_BindVariable(buf, &chat_macros[i]);
-    }
+            M_snprintf (buf, sizeof (buf), "chatmacro%i", i);
+            M_BindVariable (buf, &chat_macros[i]);
+        }
 }
 
 //
@@ -386,7 +383,8 @@ void D_BindVariables(void)
 // Called to determine whether to grab the mouse pointer
 //
 
-boolean D_GrabMouseCallback(void)
+boolean
+D_GrabMouseCallback (void)
 {
     // Drone players don't need mouse focus
 
@@ -403,187 +401,187 @@ boolean D_GrabMouseCallback(void)
     return (gamestate == GS_LEVEL) && !demoplayback && !advancedemo;
 }
 
-void doomgeneric_Tick()
+void
+doomgeneric_Tick ()
 {
     TryRunTics (); // will run at least one tic
     // DG_DrawFrame();
 
-    static  boolean		viewactivestate = false;
-    static  boolean		menuactivestate = false;
-    static  boolean		inhelpscreensstate = false;
-    static  boolean		fullscreen = false;
-    static  gamestate_t		oldgamestate = -1;
-    static  int			borderdrawcount;
-    int				nowtime;
-    int				tics;
-    int				wipestart;
-    int				y;
-    boolean			done;
-    boolean			wipe;
-    boolean			redrawsbar;
+    static boolean viewactivestate = false;
+    static boolean menuactivestate = false;
+    static boolean inhelpscreensstate = false;
+    static boolean fullscreen = false;
+    static gamestate_t oldgamestate = -1;
+    static int borderdrawcount;
+    int nowtime;
+    int tics;
+    int wipestart;
+    int y;
+    boolean done;
+    boolean wipe;
+    boolean redrawsbar;
 
     if (nodrawers)
-    	return;                    // for comparative timing / profiling
+        return; // for comparative timing / profiling
 
     redrawsbar = false;
 
     // change the view size if needed
     if (setsizeneeded)
-    {
-		R_ExecuteSetViewSize ();
-		oldgamestate = -1;                      // force background redraw
-		borderdrawcount = 3;
-    }
+        {
+            R_ExecuteSetViewSize ();
+            oldgamestate = -1; // force background redraw
+            borderdrawcount = 3;
+        }
 
     // save the current screen if about to wipe
     if (gamestate != wipegamestate)
-		{
-		wipe = true;
-		wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
-    }
+        {
+            wipe = true;
+            wipe_StartScreen (0, 0, SCREENWIDTH, SCREENHEIGHT);
+        }
     else
-    	wipe = false;
+        wipe = false;
 
     if (gamestate == GS_LEVEL && gametic)
-    	HU_Erase();
+        HU_Erase ();
     // draw the view directly
     if (gamestate == GS_LEVEL && !automapactive && gametic)
-    	R_RenderPlayerView (&players[displayplayer]);
+        R_RenderPlayerView (&players[displayplayer]);
 
     if (gamestate == GS_LEVEL && gametic)
-    	HU_Drawer ();
+        HU_Drawer ();
 
     if (gamestate == GS_LEVEL && gametic)
-    	ST_Drawer (viewheight == 200, redrawsbar);
+        ST_Drawer (viewheight == 200, redrawsbar);
 
     // clean up border stuff
     if (gamestate != oldgamestate && gamestate != GS_LEVEL)
-    	I_SetPalette (W_CacheLumpName (DEH_String("PLAYPAL"),PU_CACHE));
+        I_SetPalette (W_CacheLumpName (DEH_String ("PLAYPAL"), PU_CACHE));
 
     // see if the border needs to be initially drawn
     if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
-    {
-		viewactivestate = false;        // view was not active
-		R_FillBackScreen ();    // draw the pattern into the back screen
-    }
+        {
+            viewactivestate = false; // view was not active
+            R_FillBackScreen ();     // draw the pattern into the back screen
+        }
 
     // see if the border needs to be updated to the screen
     if (gamestate == GS_LEVEL && !automapactive && scaledviewwidth != 320)
-    {
-		if (menuactive || menuactivestate || !viewactivestate)
-			borderdrawcount = 3;
-		if (borderdrawcount)
-		{
-			R_DrawViewBorder ();    // erase old menu stuff
-			borderdrawcount--;
-		}
-    }
+        {
+            if (menuactive || menuactivestate || !viewactivestate)
+                borderdrawcount = 3;
+            if (borderdrawcount)
+                {
+                    R_DrawViewBorder (); // erase old menu stuff
+                    borderdrawcount--;
+                }
+        }
 
     if (testcontrols)
-    {
-        // Box showing current mouse speed
+        {
+            // Box showing current mouse speed
 
-        V_DrawMouseSpeedBox(testcontrols_mousespeed);
-    }
+            V_DrawMouseSpeedBox (testcontrols_mousespeed);
+        }
 
     menuactivestate = menuactive;
     viewactivestate = viewactive;
     inhelpscreensstate = inhelpscreens;
     oldgamestate = wipegamestate = gamestate;
 
-     I_FinishUpdate();
+    I_FinishUpdate ();
 }
 
 //
 //  D_DoomLoop
 //
-void D_DoomLoop (void)
+void
+D_DoomLoop (void)
 {
-    if (bfgedition &&
-        (demorecording || (gameaction == ga_playdemo) || netgame))
-    {
-        printf(" WARNING: You are playing using one of the Doom Classic\n"
-               " IWAD files shipped with the Doom 3: BFG Edition. These are\n"
-               " known to be incompatible with the regular IWAD files and\n"
-               " may cause demos and network games to get out of sync.\n");
-    }
+    if (bfgedition
+        && (demorecording || (gameaction == ga_playdemo) || netgame))
+        {
+            printf (
+                " WARNING: You are playing using one of the Doom Classic\n"
+                " IWAD files shipped with the Doom 3: BFG Edition. These are\n"
+                " known to be incompatible with the regular IWAD files and\n"
+                " may cause demos and network games to get out of sync.\n");
+        }
 
     if (demorecording)
-    	G_BeginRecording ();
+        G_BeginRecording ();
 
     main_loop_started = true;
 
-    TryRunTics();
+    TryRunTics ();
 
-    I_SetWindowTitle(gamedescription);
-    I_GraphicsCheckCommandLine();
-    I_SetGrabMouseCallback(D_GrabMouseCallback);
-    I_InitGraphics();
-    I_EnableLoadingDisk();
+    I_SetWindowTitle (gamedescription);
+    I_GraphicsCheckCommandLine ();
+    I_SetGrabMouseCallback (D_GrabMouseCallback);
+    I_InitGraphics ();
+    I_EnableLoadingDisk ();
 
-    V_RestoreBuffer();
-    R_ExecuteSetViewSize();
+    V_RestoreBuffer ();
+    R_ExecuteSetViewSize ();
 
-    D_StartGameLoop();
+    D_StartGameLoop ();
 
     if (testcontrols)
-    {
-        wipegamestate = gamestate;
-    }
+        {
+            wipegamestate = gamestate;
+        }
 
-    doomgeneric_Tick();
+    doomgeneric_Tick ();
 }
-
-
 
 //
 //  DEMO LOOP
 //
-int             demosequence;
-int             pagetic;
-char                    *pagename;
-
+int demosequence;
+int pagetic;
+char *pagename;
 
 //
 // D_PageTicker
 // Handles timing for warped projection
 //
-void D_PageTicker (void)
+void
+D_PageTicker (void)
 {
     if (--pagetic < 0)
-	D_AdvanceDemo ();
+        D_AdvanceDemo ();
 }
-
-
 
 //
 // D_PageDrawer
 //
-void D_PageDrawer (void)
+void
+D_PageDrawer (void)
 {
-    V_DrawPatch (0, 0, W_CacheLumpName(pagename, PU_CACHE));
+    V_DrawPatch (0, 0, W_CacheLumpName (pagename, PU_CACHE));
 }
-
 
 //
 // D_AdvanceDemo
 // Called after each demo or intro demosequence finishes
 //
-void D_AdvanceDemo (void)
+void
+D_AdvanceDemo (void)
 {
     advancedemo = true;
 }
-
 
 //
 // This cycles through the demo sequences.
 // FIXME - version dependend demo numbers?
 //
-void D_DoAdvanceDemo (void)
+void
+D_DoAdvanceDemo (void)
 {
-    players[consoleplayer].playerstate = PST_LIVE;  // not reborn
+    players[consoleplayer].playerstate = PST_LIVE; // not reborn
     advancedemo = false;
-    usergame = false;               // no save / end game here
+    usergame = false; // no save / end game here
     paused = false;
     gameaction = ga_nothing;
 
@@ -597,77 +595,76 @@ void D_DoAdvanceDemo (void)
     // includes a fixed executable.
 
     if (gameversion == exe_ultimate || gameversion == exe_final)
-      demosequence = (demosequence+1)%7;
+        demosequence = (demosequence + 1) % 7;
     else
-      demosequence = (demosequence+1)%6;
+        demosequence = (demosequence + 1) % 6;
 
     switch (demosequence)
-    {
-      case 0:
-	if ( gamemode == commercial )
-	    pagetic = TICRATE * 11;
-	else
-	    pagetic = 170;
-	gamestate = GS_DEMOSCREEN;
-	pagename = DEH_String("TITLEPIC");
-	if ( gamemode == commercial )
-	  S_StartMusic(mus_dm2ttl);
-	else
-	  S_StartMusic (mus_intro);
-	break;
-      case 1:
-	G_DeferedPlayDemo(DEH_String("demo1"));
-	break;
-      case 2:
-	pagetic = 200;
-	gamestate = GS_DEMOSCREEN;
-	pagename = DEH_String("CREDIT");
-	break;
-      case 3:
-	G_DeferedPlayDemo(DEH_String("demo2"));
-	break;
-      case 4:
-	gamestate = GS_DEMOSCREEN;
-	if ( gamemode == commercial)
-	{
-	    pagetic = TICRATE * 11;
-	    pagename = DEH_String("TITLEPIC");
-	    S_StartMusic(mus_dm2ttl);
-	}
-	else
-	{
-	    pagetic = 200;
+        {
+        case 0:
+            if (gamemode == commercial)
+                pagetic = TICRATE * 11;
+            else
+                pagetic = 170;
+            gamestate = GS_DEMOSCREEN;
+            pagename = DEH_String ("TITLEPIC");
+            if (gamemode == commercial)
+                S_StartMusic (mus_dm2ttl);
+            else
+                S_StartMusic (mus_intro);
+            break;
+        case 1:
+            G_DeferedPlayDemo (DEH_String ("demo1"));
+            break;
+        case 2:
+            pagetic = 200;
+            gamestate = GS_DEMOSCREEN;
+            pagename = DEH_String ("CREDIT");
+            break;
+        case 3:
+            G_DeferedPlayDemo (DEH_String ("demo2"));
+            break;
+        case 4:
+            gamestate = GS_DEMOSCREEN;
+            if (gamemode == commercial)
+                {
+                    pagetic = TICRATE * 11;
+                    pagename = DEH_String ("TITLEPIC");
+                    S_StartMusic (mus_dm2ttl);
+                }
+            else
+                {
+                    pagetic = 200;
 
-	    if ( gamemode == retail )
-	      pagename = DEH_String("CREDIT");
-	    else
-	      pagename = DEH_String("HELP2");
-	}
-	break;
-      case 5:
-	G_DeferedPlayDemo(DEH_String("demo3"));
-	break;
-        // THE DEFINITIVE DOOM Special Edition demo
-      case 6:
-	G_DeferedPlayDemo(DEH_String("demo4"));
-	break;
-    }
+                    if (gamemode == retail)
+                        pagename = DEH_String ("CREDIT");
+                    else
+                        pagename = DEH_String ("HELP2");
+                }
+            break;
+        case 5:
+            G_DeferedPlayDemo (DEH_String ("demo3"));
+            break;
+            // THE DEFINITIVE DOOM Special Edition demo
+        case 6:
+            G_DeferedPlayDemo (DEH_String ("demo4"));
+            break;
+        }
 
     // The Doom 3: BFG Edition version of doom2.wad does not have a
     // TITLETPIC lump. Use INTERPIC instead as a workaround.
-    if (bfgedition && !strcasecmp(pagename, "TITLEPIC")
-        && W_CheckNumForName("titlepic") < 0)
-    {
-        pagename = DEH_String("INTERPIC");
-    }
+    if (bfgedition && !strcasecmp (pagename, "TITLEPIC")
+        && W_CheckNumForName ("titlepic") < 0)
+        {
+            pagename = DEH_String ("INTERPIC");
+        }
 }
-
-
 
 //
 // D_StartTitle
 //
-void D_StartTitle (void)
+void
+D_StartTitle (void)
 {
     gameaction = ga_nothing;
     demosequence = -1;
@@ -679,8 +676,7 @@ void D_StartTitle (void)
 // These are from the original source: some of them are perhaps
 // not used in any dehacked patches
 
-static char *banners[] =
-{
+static char *banners[] = {
     // doom2.wad
     "                         "
     "DOOM 2: Hell on Earth v%i.%i"
@@ -716,50 +712,55 @@ static char *banners[] =
 // Otherwise, use the name given
 //
 
-static char *GetGameName(char *gamename)
+static char *
+GetGameName (char *gamename)
 {
     size_t i;
     char *deh_sub;
 
-    for (i=0; i<arrlen(banners); ++i)
-    {
-        // Has the banner been replaced?
-
-        deh_sub = DEH_String(banners[i]);
-
-        if (deh_sub != banners[i])
+    for (i = 0; i < arrlen (banners); ++i)
         {
-            size_t gamename_size;
-            int version;
+            // Has the banner been replaced?
 
-            // Has been replaced.
-            // We need to expand via printf to include the Doom version number
-            // We also need to cut off spaces to get the basic name
+            deh_sub = DEH_String (banners[i]);
 
-            gamename_size = strlen(deh_sub) + 10;
-            gamename = Z_Malloc(gamename_size, PU_STATIC, 0);
-            version = G_VanillaVersionCode();
-            M_snprintf(gamename, gamename_size, deh_sub,
-                       version / 100, version % 100);
+            if (deh_sub != banners[i])
+                {
+                    size_t gamename_size;
+                    int version;
 
-            while (gamename[0] != '\0' && isspace((int)gamename[0]))
-            {
-                memmove(gamename, gamename + 1, gamename_size - 1);
-            }
+                    // Has been replaced.
+                    // We need to expand via printf to include the Doom version
+                    // number We also need to cut off spaces to get the basic
+                    // name
 
-            while (gamename[0] != '\0' && isspace((int)gamename[strlen(gamename)-1]))
-            {
-                gamename[strlen(gamename) - 1] = '\0';
-            }
+                    gamename_size = strlen (deh_sub) + 10;
+                    gamename = Z_Malloc (gamename_size, PU_STATIC, 0);
+                    version = G_VanillaVersionCode ();
+                    M_snprintf (gamename, gamename_size, deh_sub,
+                                version / 100, version % 100);
 
-            return gamename;
+                    while (gamename[0] != '\0' && isspace ((int)gamename[0]))
+                        {
+                            memmove (gamename, gamename + 1,
+                                     gamename_size - 1);
+                        }
+
+                    while (gamename[0] != '\0'
+                           && isspace ((int)gamename[strlen (gamename) - 1]))
+                        {
+                            gamename[strlen (gamename) - 1] = '\0';
+                        }
+
+                    return gamename;
+                }
         }
-    }
 
     return gamename;
 }
 
-static void SetMissionForPackName(char *pack_name)
+static void
+SetMissionForPackName (char *pack_name)
 {
     int i;
     static const struct
@@ -767,35 +768,36 @@ static void SetMissionForPackName(char *pack_name)
         char *name;
         int mission;
     } packs[] = {
-        { "doom2",    doom2 },
-        { "tnt",      pack_tnt },
+        { "doom2", doom2 },
+        { "tnt", pack_tnt },
         { "plutonia", pack_plut },
     };
 
-    for (i = 0; i < arrlen(packs); ++i)
-    {
-        if (!strcasecmp(pack_name, packs[i].name))
+    for (i = 0; i < arrlen (packs); ++i)
         {
-            gamemission = packs[i].mission;
-            return;
+            if (!strcasecmp (pack_name, packs[i].name))
+                {
+                    gamemission = packs[i].mission;
+                    return;
+                }
         }
-    }
 
-    printf("Valid mission packs are:\n");
+    printf ("Valid mission packs are:\n");
 
-    for (i = 0; i < arrlen(packs); ++i)
-    {
-        printf("\t%s\n", packs[i].name);
-    }
+    for (i = 0; i < arrlen (packs); ++i)
+        {
+            printf ("\t%s\n", packs[i].name);
+        }
 
-    I_Error("Unknown mission pack name: %s", pack_name);
+    I_Error ("Unknown mission pack name: %s", pack_name);
 }
 
 //
 // Find out what version of Doom is playing.
 //
 
-void D_IdentifyVersion(void)
+void
+D_IdentifyVersion (void)
 {
     // gamemission is set up by the D_FindIWAD function.  But if
     // we specify '-iwad', we have to identify using
@@ -804,149 +806,153 @@ void D_IdentifyVersion(void)
     // identify by its contents.
 
     if (gamemission == none)
-    {
-        unsigned int i;
-
-        for (i=0; i<numlumps; ++i)
         {
-            if (!strncasecmp(lumpinfo[i].name, "MAP01", 8))
-            {
-                gamemission = doom2;
-                break;
-            }
-            else if (!strncasecmp(lumpinfo[i].name, "E1M1", 8))
-            {
-                gamemission = doom;
-                break;
-            }
-        }
+            unsigned int i;
 
-        if (gamemission == none)
-        {
-            // Still no idea.  I don't think this is going to work.
+            for (i = 0; i < numlumps; ++i)
+                {
+                    if (!strncasecmp (lumpinfo[i].name, "MAP01", 8))
+                        {
+                            gamemission = doom2;
+                            break;
+                        }
+                    else if (!strncasecmp (lumpinfo[i].name, "E1M1", 8))
+                        {
+                            gamemission = doom;
+                            break;
+                        }
+                }
 
-            I_Error("Unknown or invalid IWAD file.");
+            if (gamemission == none)
+                {
+                    // Still no idea.  I don't think this is going to work.
+
+                    I_Error ("Unknown or invalid IWAD file.");
+                }
         }
-    }
 
     // Make sure gamemode is set up correctly
 
     if (logical_gamemission == doom)
-    {
-        // Doom 1.  But which version?
+        {
+            // Doom 1.  But which version?
 
-        if (W_CheckNumForName("E4M1") > 0)
-        {
-            // Ultimate Doom
+            if (W_CheckNumForName ("E4M1") > 0)
+                {
+                    // Ultimate Doom
 
-            gamemode = retail;
+                    gamemode = retail;
+                }
+            else if (W_CheckNumForName ("E3M1") > 0)
+                {
+                    gamemode = registered;
+                }
+            else
+                {
+                    gamemode = shareware;
+                }
         }
-        else if (W_CheckNumForName("E3M1") > 0)
-        {
-            gamemode = registered;
-        }
-        else
-        {
-            gamemode = shareware;
-        }
-    }
     else
-    {
-        int p;
-
-        // Doom 2 of some kind.
-        gamemode = commercial;
-
-        // We can manually override the gamemission that we got from the
-        // IWAD detection code. This allows us to eg. play Plutonia 2
-        // with Freedoom and get the right level names.
-
-        //!
-        // @arg <pack>
-        //
-        // Explicitly specify a Doom II "mission pack" to run as, instead of
-        // detecting it based on the filename. Valid values are: "doom2",
-        // "tnt" and "plutonia".
-        //
-        p = M_CheckParmWithArgs("-pack", 1);
-        if (p > 0)
         {
-            SetMissionForPackName(myargv[p + 1]);
+            int p;
+
+            // Doom 2 of some kind.
+            gamemode = commercial;
+
+            // We can manually override the gamemission that we got from the
+            // IWAD detection code. This allows us to eg. play Plutonia 2
+            // with Freedoom and get the right level names.
+
+            //!
+            // @arg <pack>
+            //
+            // Explicitly specify a Doom II "mission pack" to run as, instead
+            // of detecting it based on the filename. Valid values are:
+            // "doom2", "tnt" and "plutonia".
+            //
+            p = M_CheckParmWithArgs ("-pack", 1);
+            if (p > 0)
+                {
+                    SetMissionForPackName (myargv[p + 1]);
+                }
         }
-    }
 }
 
 // Set the gamedescription string
 
-void D_SetGameDescription(void)
+void
+D_SetGameDescription (void)
 {
-    boolean is_freedoom = W_CheckNumForName("FREEDOOM") >= 0,
-            is_freedm = W_CheckNumForName("FREEDM") >= 0;
+    boolean is_freedoom = W_CheckNumForName ("FREEDOOM") >= 0,
+            is_freedm = W_CheckNumForName ("FREEDM") >= 0;
 
     gamedescription = "Unknown";
 
     if (logical_gamemission == doom)
-    {
-        // Doom 1.  But which version?
+        {
+            // Doom 1.  But which version?
 
-        if (is_freedoom)
-        {
-            gamedescription = GetGameName("Freedoom: Phase 1");
-        }
-        else if (gamemode == retail)
-        {
-            // Ultimate Doom
+            if (is_freedoom)
+                {
+                    gamedescription = GetGameName ("Freedoom: Phase 1");
+                }
+            else if (gamemode == retail)
+                {
+                    // Ultimate Doom
 
-            gamedescription = GetGameName("The Ultimate DOOM");
+                    gamedescription = GetGameName ("The Ultimate DOOM");
+                }
+            else if (gamemode == registered)
+                {
+                    gamedescription = GetGameName ("DOOM Registered");
+                }
+            else if (gamemode == shareware)
+                {
+                    gamedescription = GetGameName ("DOOM Shareware");
+                }
         }
-        else if (gamemode == registered)
-        {
-            gamedescription = GetGameName("DOOM Registered");
-        }
-        else if (gamemode == shareware)
-        {
-            gamedescription = GetGameName("DOOM Shareware");
-        }
-    }
     else
-    {
-        // Doom 2 of some kind.  But which mission?
+        {
+            // Doom 2 of some kind.  But which mission?
 
-        if (is_freedoom)
-        {
-            if (is_freedm)
-            {
-                gamedescription = GetGameName("FreeDM");
-            }
-            else
-            {
-                gamedescription = GetGameName("Freedoom: Phase 2");
-            }
+            if (is_freedoom)
+                {
+                    if (is_freedm)
+                        {
+                            gamedescription = GetGameName ("FreeDM");
+                        }
+                    else
+                        {
+                            gamedescription
+                                = GetGameName ("Freedoom: Phase 2");
+                        }
+                }
+            else if (logical_gamemission == doom2)
+                {
+                    gamedescription = GetGameName ("DOOM 2: Hell on Earth");
+                }
+            else if (logical_gamemission == pack_plut)
+                {
+                    gamedescription
+                        = GetGameName ("DOOM 2: Plutonia Experiment");
+                }
+            else if (logical_gamemission == pack_tnt)
+                {
+                    gamedescription = GetGameName ("DOOM 2: TNT - Evilution");
+                }
         }
-        else if (logical_gamemission == doom2)
-        {
-            gamedescription = GetGameName("DOOM 2: Hell on Earth");
-        }
-        else if (logical_gamemission == pack_plut)
-        {
-            gamedescription = GetGameName("DOOM 2: Plutonia Experiment");
-        }
-        else if (logical_gamemission == pack_tnt)
-        {
-            gamedescription = GetGameName("DOOM 2: TNT - Evilution");
-        }
-    }
 }
 
 //      print title for every printed line
-char            title[128];
+char title[128];
 
-static boolean D_AddFile(char *filename)
+static boolean
+D_AddFile (char *filename)
 {
     wad_file_t *handle;
 
-    printf(" adding %s\n", filename);
-    handle = W_AddFile(filename);
+    printf (" adding %s\n", filename);
+    handle = W_AddFile (filename);
 
     return handle != NULL;
 }
@@ -955,50 +961,58 @@ static boolean D_AddFile(char *filename)
 // Some dehacked mods replace these.  These are only displayed if they are
 // replaced by dehacked.
 
-static char *copyright_banners[] =
-{
-    "===========================================================================\n"
-    "ATTENTION:  This version of DOOM has been modified.  If you would like to\n"
-    "get a copy of the original game, call 1-800-IDGAMES or see the readme file.\n"
-    "        You will not receive technical support for modified games.\n"
-    "                      press enter to continue\n"
-    "===========================================================================\n",
+static char *copyright_banners[]
+    = { "====================================================================="
+        "======\n"
+        "ATTENTION:  This version of DOOM has been modified.  If you would "
+        "like to\n"
+        "get a copy of the original game, call 1-800-IDGAMES or see the "
+        "readme file.\n"
+        "        You will not receive technical support for modified games.\n"
+        "                      press enter to continue\n"
+        "====================================================================="
+        "======\n",
 
-    "===========================================================================\n"
-    "                 Commercial product - do not distribute!\n"
-    "         Please report software piracy to the SPA: 1-800-388-PIR8\n"
-    "===========================================================================\n",
+        "====================================================================="
+        "======\n"
+        "                 Commercial product - do not distribute!\n"
+        "         Please report software piracy to the SPA: 1-800-388-PIR8\n"
+        "====================================================================="
+        "======\n",
 
-    "===========================================================================\n"
-    "                                Shareware!\n"
-    "===========================================================================\n"
-};
+        "====================================================================="
+        "======\n"
+        "                                Shareware!\n"
+        "====================================================================="
+        "======\n" };
 
 // Prints a message only if it has been modified by dehacked.
 
-void PrintDehackedBanners(void)
+void
+PrintDehackedBanners (void)
 {
     size_t i;
 
-    for (i=0; i<arrlen(copyright_banners); ++i)
-    {
-        char *deh_s;
-
-        deh_s = DEH_String(copyright_banners[i]);
-
-        if (deh_s != copyright_banners[i])
+    for (i = 0; i < arrlen (copyright_banners); ++i)
         {
-            printf("%s", deh_s);
+            char *deh_s;
 
-            // Make sure the modified banner always ends in a newline character.
-            // If it doesn't, add a newline.  This fixes av.wad.
+            deh_s = DEH_String (copyright_banners[i]);
 
-            if (deh_s[strlen(deh_s) - 1] != '\n')
-            {
-                printf("\n");
-            }
+            if (deh_s != copyright_banners[i])
+                {
+                    printf ("%s", deh_s);
+
+                    // Make sure the modified banner always ends in a newline
+                    // character. If it doesn't, add a newline.  This fixes
+                    // av.wad.
+
+                    if (deh_s[strlen (deh_s) - 1] != '\n')
+                        {
+                            printf ("\n");
+                        }
+                }
         }
-    }
 }
 
 static struct
@@ -1007,21 +1021,22 @@ static struct
     char *cmdline;
     GameVersion_t version;
 } gameversions[] = {
-    {"Doom 1.666",           "1.666",      exe_doom_1_666},
-    {"Doom 1.7/1.7a",        "1.7",        exe_doom_1_7},
-    {"Doom 1.8",             "1.8",        exe_doom_1_8},
-    {"Doom 1.9",             "1.9",        exe_doom_1_9},
-    {"Hacx",                 "hacx",       exe_hacx},
-    {"Ultimate Doom",        "ultimate",   exe_ultimate},
-    {"Final Doom",           "final",      exe_final},
-    {"Final Doom (alt)",     "final2",     exe_final2},
-    {"Chex Quest",           "chex",       exe_chex},
-    { NULL,                  NULL,         0},
+    { "Doom 1.666", "1.666", exe_doom_1_666 },
+    { "Doom 1.7/1.7a", "1.7", exe_doom_1_7 },
+    { "Doom 1.8", "1.8", exe_doom_1_8 },
+    { "Doom 1.9", "1.9", exe_doom_1_9 },
+    { "Hacx", "hacx", exe_hacx },
+    { "Ultimate Doom", "ultimate", exe_ultimate },
+    { "Final Doom", "final", exe_final },
+    { "Final Doom (alt)", "final2", exe_final2 },
+    { "Chex Quest", "chex", exe_chex },
+    { NULL, NULL, 0 },
 };
 
 // Initialize the game version
 
-static void InitGameVersion(void)
+static void
+InitGameVersion (void)
 {
     int p;
     int i;
@@ -1034,113 +1049,116 @@ static void InitGameVersion(void)
     // "ultimate", "final", "final2", "hacx" and "chex".
     //
 
-    p = M_CheckParmWithArgs("-gameversion", 1);
+    p = M_CheckParmWithArgs ("-gameversion", 1);
 
     if (p)
-    {
-        for (i=0; gameversions[i].description != NULL; ++i)
         {
-            if (!strcmp(myargv[p+1], gameversions[i].cmdline))
-            {
-                gameversion = gameversions[i].version;
-                break;
-            }
+            for (i = 0; gameversions[i].description != NULL; ++i)
+                {
+                    if (!strcmp (myargv[p + 1], gameversions[i].cmdline))
+                        {
+                            gameversion = gameversions[i].version;
+                            break;
+                        }
+                }
+
+            if (gameversions[i].description == NULL)
+                {
+                    printf ("Supported game versions:\n");
+
+                    for (i = 0; gameversions[i].description != NULL; ++i)
+                        {
+                            printf ("\t%s (%s)\n", gameversions[i].cmdline,
+                                    gameversions[i].description);
+                        }
+
+                    I_Error ("Unknown game version '%s'", myargv[p + 1]);
+                }
         }
-
-        if (gameversions[i].description == NULL)
-        {
-            printf("Supported game versions:\n");
-
-            for (i=0; gameversions[i].description != NULL; ++i)
-            {
-                printf("\t%s (%s)\n", gameversions[i].cmdline,
-                        gameversions[i].description);
-            }
-
-            I_Error("Unknown game version '%s'", myargv[p+1]);
-        }
-    }
     else
-    {
-        // Determine automatically
-
-        if (gamemission == pack_chex)
         {
-            // chex.exe - identified by iwad filename
+            // Determine automatically
 
-            gameversion = exe_chex;
-        }
-        else if (gamemission == pack_hacx)
-        {
-            // hacx.exe: identified by iwad filename
+            if (gamemission == pack_chex)
+                {
+                    // chex.exe - identified by iwad filename
 
-            gameversion = exe_hacx;
-        }
-        else if (gamemode == shareware || gamemode == registered)
-        {
-            // original
+                    gameversion = exe_chex;
+                }
+            else if (gamemission == pack_hacx)
+                {
+                    // hacx.exe: identified by iwad filename
 
-            gameversion = exe_doom_1_9;
+                    gameversion = exe_hacx;
+                }
+            else if (gamemode == shareware || gamemode == registered)
+                {
+                    // original
 
-            // TODO: Detect IWADs earlier than Doom v1.9.
-        }
-        else if (gamemode == retail)
-        {
-            gameversion = exe_ultimate;
-        }
-        else if (gamemode == commercial)
-        {
-            if (gamemission == doom2)
-            {
-                gameversion = exe_doom_1_9;
-            }
-            else
-            {
-                // Final Doom: tnt or plutonia
-                // Defaults to emulating the first Final Doom executable,
-                // which has the crash in the demo loop; however, having
-                // this as the default should mean that it plays back
-                // most demos correctly.
+                    gameversion = exe_doom_1_9;
 
-                gameversion = exe_final;
-            }
+                    // TODO: Detect IWADs earlier than Doom v1.9.
+                }
+            else if (gamemode == retail)
+                {
+                    gameversion = exe_ultimate;
+                }
+            else if (gamemode == commercial)
+                {
+                    if (gamemission == doom2)
+                        {
+                            gameversion = exe_doom_1_9;
+                        }
+                    else
+                        {
+                            // Final Doom: tnt or plutonia
+                            // Defaults to emulating the first Final Doom
+                            // executable, which has the crash in the demo
+                            // loop; however, having this as the default should
+                            // mean that it plays back most demos correctly.
+
+                            gameversion = exe_final;
+                        }
+                }
         }
-    }
 
     // The original exe does not support retail - 4th episode not supported
 
     if (gameversion < exe_ultimate && gamemode == retail)
-    {
-        gamemode = registered;
-    }
+        {
+            gamemode = registered;
+        }
 
     // EXEs prior to the Final Doom exes do not support Final Doom.
 
     if (gameversion < exe_final && gamemode == commercial
-     && (gamemission == pack_tnt || gamemission == pack_plut))
-    {
-        gamemission = doom2;
-    }
+        && (gamemission == pack_tnt || gamemission == pack_plut))
+        {
+            gamemission = doom2;
+        }
 }
 
-void PrintGameVersion(void)
+void
+PrintGameVersion (void)
 {
     int i;
 
-    for (i=0; gameversions[i].description != NULL; ++i)
-    {
-        if (gameversions[i].version == gameversion)
+    for (i = 0; gameversions[i].description != NULL; ++i)
         {
-            printf("Emulating the behavior of the "
-                   "'%s' executable.\n", gameversions[i].description);
-            break;
+            if (gameversions[i].version == gameversion)
+                {
+                    printf ("Emulating the behavior of the "
+                            "'%s' executable.\n",
+                            gameversions[i].description);
+                    break;
+                }
         }
-    }
 }
 
 // Function called at exit to display the ENDOOM screen
 
-static void D_Endoom(void)
+static void
+D_Endoom (void)
 {
     byte *endoom;
 
@@ -1148,95 +1166,101 @@ static void D_Endoom(void)
     // in screensaver or control test mode. Only show it once the
     // game has actually started.
 
-    if (!show_endoom || !main_loop_started
-     || screensaver_mode || M_CheckParm("-testcontrols") > 0)
-    {
-        return;
-    }
+    if (!show_endoom || !main_loop_started || screensaver_mode
+        || M_CheckParm ("-testcontrols") > 0)
+        {
+            return;
+        }
 
-    endoom = W_CacheLumpName(DEH_String("ENDOOM"), PU_STATIC);
+    endoom = W_CacheLumpName (DEH_String ("ENDOOM"), PU_STATIC);
 
-    I_Endoom(endoom);
+    I_Endoom (endoom);
 
-	exit(0);
+    exit (0);
 }
 
 #if ORIGCODE
 // Load dehacked patches needed for certain IWADs.
-static void LoadIwadDeh(void)
+static void
+LoadIwadDeh (void)
 {
     // The Freedoom IWADs have DEHACKED lumps that must be loaded.
-    if (W_CheckNumForName("FREEDOOM") >= 0)
-    {
-        // Old versions of Freedoom (before 2014-09) did not have technically
-        // valid DEHACKED lumps, so ignore errors and just continue if this
-        // is an old IWAD.
-        DEH_LoadLumpByName("DEHACKED", false, true);
-    }
+    if (W_CheckNumForName ("FREEDOOM") >= 0)
+        {
+            // Old versions of Freedoom (before 2014-09) did not have
+            // technically valid DEHACKED lumps, so ignore errors and just
+            // continue if this is an old IWAD.
+            DEH_LoadLumpByName ("DEHACKED", false, true);
+        }
 
     // If this is the HACX IWAD, we need to load the DEHACKED lump.
     if (gameversion == exe_hacx)
-    {
-        if (!DEH_LoadLumpByName("DEHACKED", true, false))
         {
-            I_Error("DEHACKED lump not found.  Please check that this is the "
-                    "Hacx v1.2 IWAD.");
+            if (!DEH_LoadLumpByName ("DEHACKED", true, false))
+                {
+                    I_Error ("DEHACKED lump not found.  Please check that "
+                             "this is the "
+                             "Hacx v1.2 IWAD.");
+                }
         }
-    }
 
     // Chex Quest needs a separate Dehacked patch which must be downloaded
     // and installed next to the IWAD.
     if (gameversion == exe_chex)
-    {
-        char *chex_deh = NULL;
-        char *sep;
-
-        // Look for chex.deh in the same directory as the IWAD file.
-        sep = strrchr(iwadfile, DIR_SEPARATOR);
-
-        if (sep != NULL)
         {
-            size_t chex_deh_len = strlen(iwadfile) + 9;
-            chex_deh = malloc(chex_deh_len);
-            M_StringCopy(chex_deh, iwadfile, chex_deh_len);
-            chex_deh[sep - iwadfile + 1] = '\0';
-            M_StringConcat(chex_deh, "chex.deh", chex_deh_len);
-        }
-        else
-        {
-            chex_deh = strdup("chex.deh");
-        }
+            char *chex_deh = NULL;
+            char *sep;
 
-        // If the dehacked patch isn't found, try searching the WAD
-        // search path instead.  We might find it...
-        if (!M_FileExists(chex_deh))
-        {
-            free(chex_deh);
-            chex_deh = D_FindWADByName("chex.deh");
-        }
+            // Look for chex.deh in the same directory as the IWAD file.
+            sep = strrchr (iwadfile, DIR_SEPARATOR);
 
-        // Still not found?
-        if (chex_deh == NULL)
-        {
-            I_Error("Unable to find Chex Quest dehacked file (chex.deh).\n"
-                    "The dehacked file is required in order to emulate\n"
-                    "chex.exe correctly.  It can be found in your nearest\n"
-                    "/idgames repository mirror at:\n\n"
-                    "   utils/exe_edit/patches/chexdeh.zip");
-        }
+            if (sep != NULL)
+                {
+                    size_t chex_deh_len = strlen (iwadfile) + 9;
+                    chex_deh = malloc (chex_deh_len);
+                    M_StringCopy (chex_deh, iwadfile, chex_deh_len);
+                    chex_deh[sep - iwadfile + 1] = '\0';
+                    M_StringConcat (chex_deh, "chex.deh", chex_deh_len);
+                }
+            else
+                {
+                    chex_deh = strdup ("chex.deh");
+                }
 
-        if (!DEH_LoadFile(chex_deh))
-        {
-            I_Error("Failed to load chex.deh needed for emulating chex.exe.");
+            // If the dehacked patch isn't found, try searching the WAD
+            // search path instead.  We might find it...
+            if (!M_FileExists (chex_deh))
+                {
+                    free (chex_deh);
+                    chex_deh = D_FindWADByName ("chex.deh");
+                }
+
+            // Still not found?
+            if (chex_deh == NULL)
+                {
+                    I_Error (
+                        "Unable to find Chex Quest dehacked file (chex.deh).\n"
+                        "The dehacked file is required in order to emulate\n"
+                        "chex.exe correctly.  It can be found in your "
+                        "nearest\n"
+                        "/idgames repository mirror at:\n\n"
+                        "   utils/exe_edit/patches/chexdeh.zip");
+                }
+
+            if (!DEH_LoadFile (chex_deh))
+                {
+                    I_Error ("Failed to load chex.deh needed for emulating "
+                             "chex.exe.");
+                }
         }
-    }
 }
 #endif
 
 //
 // D_DoomMain
 //
-void D_DoomMain (void)
+void
+D_DoomMain (void)
 {
     int p;
     char file[256];
@@ -1245,13 +1269,13 @@ void D_DoomMain (void)
     int numiwadlumps;
 #endif
 
-    I_AtExit(D_Endoom, false);
+    I_AtExit (D_Endoom, false);
 
     // print banner
 
-    I_PrintBanner(PACKAGE_STRING);
+    I_PrintBanner (PACKAGE_STRING);
 
-    DEH_printf("Z_Init: Init zone memory allocation daemon. \n");
+    DEH_printf ("Z_Init: Init zone memory allocation daemon. \n");
     Z_Init ();
 
 #ifdef FEATURE_MULTIPLAYER
@@ -1262,13 +1286,13 @@ void D_DoomMain (void)
     // in the game itself.
     //
 
-    if (M_CheckParm("-dedicated") > 0)
-    {
-        printf("Dedicated server mode.\n");
-        NET_DedicatedServer();
+    if (M_CheckParm ("-dedicated") > 0)
+        {
+            printf ("Dedicated server mode.\n");
+            NET_DedicatedServer ();
 
-        // Never returns
-    }
+            // Never returns
+        }
 
     //!
     // @category net
@@ -1277,11 +1301,11 @@ void D_DoomMain (void)
     // servers.
     //
 
-    if (M_CheckParm("-search"))
-    {
-        NET_MasterQuery();
-        exit(0);
-    }
+    if (M_CheckParm ("-search"))
+        {
+            NET_MasterQuery ();
+            exit (0);
+        }
 
     //!
     // @arg <address>
@@ -1291,13 +1315,13 @@ void D_DoomMain (void)
     // address.
     //
 
-    p = M_CheckParmWithArgs("-query", 1);
+    p = M_CheckParmWithArgs ("-query", 1);
 
     if (p)
-    {
-        NET_QueryAddress(myargv[p+1]);
-        exit(0);
-    }
+        {
+            NET_QueryAddress (myargv[p + 1]);
+            exit (0);
+        }
 
     //!
     // @category net
@@ -1305,11 +1329,11 @@ void D_DoomMain (void)
     // Search the local LAN for running servers.
     //
 
-    if (M_CheckParm("-localsearch"))
-    {
-        NET_LANQuery();
-        exit(0);
-    }
+    if (M_CheckParm ("-localsearch"))
+        {
+            NET_LANQuery ();
+            exit (0);
+        }
 
 #endif
 
@@ -1346,7 +1370,7 @@ void D_DoomMain (void)
 
     devparm = M_CheckParm ("-devparm");
 
-    I_DisplayFPSDots(devparm);
+    I_DisplayFPSDots (devparm);
 
     //!
     // @category net
@@ -1356,7 +1380,7 @@ void D_DoomMain (void)
     //
 
     if (M_CheckParm ("-deathmatch"))
-	deathmatch = 1;
+        deathmatch = 1;
 
     //!
     // @category net
@@ -1367,10 +1391,10 @@ void D_DoomMain (void)
     //
 
     if (M_CheckParm ("-altdeath"))
-	deathmatch = 2;
+        deathmatch = 2;
 
     if (devparm)
-	DEH_printf(D_DEVSTR);
+        DEH_printf (D_DEVSTR);
 
     // find which dir to use for config files
 
@@ -1384,19 +1408,19 @@ void D_DoomMain (void)
     // allowing play from CD.
     //
 
-    if (M_ParmExists("-cdrom"))
-    {
-        printf(D_CDROM);
+    if (M_ParmExists ("-cdrom"))
+        {
+            printf (D_CDROM);
 
-        M_SetConfigDir("c:\\doomdata\\");
-    }
+            M_SetConfigDir ("c:\\doomdata\\");
+        }
     else
 #endif
-    {
-        // Auto-detect the configuration dir.
+        {
+            // Auto-detect the configuration dir.
 
-        M_SetConfigDir(NULL);
-    }
+            M_SetConfigDir (NULL);
+        }
 
     //!
     // @arg <x>
@@ -1406,63 +1430,64 @@ void D_DoomMain (void)
     // x defaults to 200.  Values are rounded up to 10 and down to 400.
     //
 
-    if ( (p=M_CheckParm ("-turbo")) )
-    {
-	int     scale = 200;
-	extern int forwardmove[2];
-	extern int sidemove[2];
+    if ((p = M_CheckParm ("-turbo")))
+        {
+            int scale = 200;
+            extern int forwardmove[2];
+            extern int sidemove[2];
 
-	if (p<myargc-1)
-	    scale = atoi (myargv[p+1]);
-	if (scale < 10)
-	    scale = 10;
-	if (scale > 400)
-	    scale = 400;
-        DEH_printf("turbo scale: %i%%\n", scale);
-	forwardmove[0] = forwardmove[0]*scale/100;
-	forwardmove[1] = forwardmove[1]*scale/100;
-	sidemove[0] = sidemove[0]*scale/100;
-	sidemove[1] = sidemove[1]*scale/100;
-    }
+            if (p < myargc - 1)
+                scale = atoi (myargv[p + 1]);
+            if (scale < 10)
+                scale = 10;
+            if (scale > 400)
+                scale = 400;
+            DEH_printf ("turbo scale: %i%%\n", scale);
+            forwardmove[0] = forwardmove[0] * scale / 100;
+            forwardmove[1] = forwardmove[1] * scale / 100;
+            sidemove[0] = sidemove[0] * scale / 100;
+            sidemove[1] = sidemove[1] * scale / 100;
+        }
 
     // init subsystems
-    DEH_printf("V_Init: allocate screens.\n");
+    DEH_printf ("V_Init: allocate screens.\n");
     V_Init ();
 
     // Load configuration files before initialising other subsystems.
-    DEH_printf("M_LoadDefaults: Load system defaults.\n");
-    M_SetConfigFilenames("default.cfg", PROGRAM_PREFIX "doom.cfg");
-    D_BindVariables();
-    M_LoadDefaults();
+    DEH_printf ("M_LoadDefaults: Load system defaults.\n");
+    M_SetConfigFilenames ("default.cfg", PROGRAM_PREFIX "doom.cfg");
+    D_BindVariables ();
+    M_LoadDefaults ();
 
     // Save configuration at exit.
-    I_AtExit(M_SaveDefaults, false);
+    I_AtExit (M_SaveDefaults, false);
 
     // Find main IWAD file and load it.
-    iwadfile = D_FindIWAD(IWAD_MASK_DOOM, &gamemission);
+    iwadfile = D_FindIWAD (IWAD_MASK_DOOM, &gamemission);
 
     // None found?
 
     if (iwadfile == NULL)
-    {
-        I_Error("Game mode indeterminate.  No IWAD file was found.  Try\n"
+        {
+            I_Error (
+                "Game mode indeterminate.  No IWAD file was found.  Try\n"
                 "specifying one with the '-iwad' command line parameter.\n");
-    }
+        }
 
     modifiedgame = false;
 
-    DEH_printf("W_Init: Init WADfiles.\n");
-    D_AddFile(iwadfile);
+    DEH_printf ("W_Init: Init WADfiles.\n");
+    D_AddFile (iwadfile);
 #if ORIGCODE
     numiwadlumps = numlumps;
 #endif
 
-    W_CheckCorrectIWAD(doom);
+    W_CheckCorrectIWAD (doom);
 
     // Now that we've loaded the IWAD, we can figure out what gamemission
     // we're playing and which version of Vanilla Doom we need to emulate.
-    D_IdentifyVersion();
-    InitGameVersion();
+    D_IdentifyVersion ();
+    InitGameVersion ();
 
 #if ORIGCODE
     //!
@@ -1471,12 +1496,12 @@ void D_DoomMain (void)
     // Disable automatic loading of Dehacked patches for certain
     // IWAD files.
     //
-    if (!M_ParmExists("-nodeh"))
-    {
-        // Some IWADs have dehacked patches that need to be loaded for
-        // them to be played properly.
-        LoadIwadDeh();
-    }
+    if (!M_ParmExists ("-nodeh"))
+        {
+            // Some IWADs have dehacked patches that need to be loaded for
+            // them to be played properly.
+            LoadIwadDeh ();
+        }
 #endif
 
     // Doom 3: BFG Edition includes modified versions of the classic
@@ -1487,34 +1512,34 @@ void D_DoomMain (void)
     // We specifically check for DMENUPIC here, before PWADs have been
     // loaded which could probably include a lump of that name.
 
-    if (W_CheckNumForName("dmenupic") >= 0)
-    {
-        printf("BFG Edition: Using workarounds as needed.\n");
-        bfgedition = true;
+    if (W_CheckNumForName ("dmenupic") >= 0)
+        {
+            printf ("BFG Edition: Using workarounds as needed.\n");
+            bfgedition = true;
 
-        // BFG Edition changes the names of the secret levels to
-        // censor the Wolfenstein references. It also has an extra
-        // secret level (MAP33). In Vanilla Doom (meaning the DOS
-        // version), MAP33 overflows into the Plutonia level names
-        // array, so HUSTR_33 is actually PHUSTR_1.
+            // BFG Edition changes the names of the secret levels to
+            // censor the Wolfenstein references. It also has an extra
+            // secret level (MAP33). In Vanilla Doom (meaning the DOS
+            // version), MAP33 overflows into the Plutonia level names
+            // array, so HUSTR_33 is actually PHUSTR_1.
 
-        DEH_AddStringReplacement(HUSTR_31, "level 31: idkfa");
-        DEH_AddStringReplacement(HUSTR_32, "level 32: keen");
-        DEH_AddStringReplacement(PHUSTR_1, "level 33: betray");
+            DEH_AddStringReplacement (HUSTR_31, "level 31: idkfa");
+            DEH_AddStringReplacement (HUSTR_32, "level 32: keen");
+            DEH_AddStringReplacement (PHUSTR_1, "level 33: betray");
 
-        // The BFG edition doesn't have the "low detail" menu option (fair
-        // enough). But bizarrely, it reuses the M_GDHIGH patch as a label
-        // for the options menu (says "Fullscreen:"). Why the perpetrators
-        // couldn't just add a new graphic lump and had to reuse this one,
-        // I don't know.
-        //
-        // The end result is that M_GDHIGH is too wide and causes the game
-        // to crash. As a workaround to get a minimum level of support for
-        // the BFG edition IWADs, use the "ON"/"OFF" graphics instead.
+            // The BFG edition doesn't have the "low detail" menu option (fair
+            // enough). But bizarrely, it reuses the M_GDHIGH patch as a label
+            // for the options menu (says "Fullscreen:"). Why the perpetrators
+            // couldn't just add a new graphic lump and had to reuse this one,
+            // I don't know.
+            //
+            // The end result is that M_GDHIGH is too wide and causes the game
+            // to crash. As a workaround to get a minimum level of support for
+            // the BFG edition IWADs, use the "ON"/"OFF" graphics instead.
 
-        DEH_AddStringReplacement("M_GDHIGH", "M_MSGON");
-        DEH_AddStringReplacement("M_GDLOW", "M_MSGOFF");
-    }
+            DEH_AddStringReplacement ("M_GDHIGH", "M_MSGON");
+            DEH_AddStringReplacement ("M_GDLOW", "M_MSGOFF");
+        }
 
 #ifdef FEATURE_DEHACKED
     // Load Dehacked patches specified on the command line with -deh.
@@ -1523,14 +1548,14 @@ void D_DoomMain (void)
     //  1. IWAD dehacked patches.
     //  2. Command line dehacked patches specified with -deh.
     //  3. PWAD dehacked patches in DEHACKED lumps.
-    DEH_ParseCommandLine();
+    DEH_ParseCommandLine ();
 #endif
 
     // Load PWAD files.
-    modifiedgame = W_ParseCommandLine();
+    modifiedgame = W_ParseCommandLine ();
 
     // Debug:
-//    W_PrintDirectory();
+    //    W_PrintDirectory();
 
     //!
     // @arg <demo>
@@ -1543,53 +1568,54 @@ void D_DoomMain (void)
     p = M_CheckParmWithArgs ("-playdemo", 1);
 
     if (!p)
-    {
-        //!
-        // @arg <demo>
-        // @category demo
-        // @vanilla
-        //
-        // Play back the demo named demo.lmp, determining the framerate
-        // of the screen.
-        //
-	p = M_CheckParmWithArgs("-timedemo", 1);
-
-    }
+        {
+            //!
+            // @arg <demo>
+            // @category demo
+            // @vanilla
+            //
+            // Play back the demo named demo.lmp, determining the framerate
+            // of the screen.
+            //
+            p = M_CheckParmWithArgs ("-timedemo", 1);
+        }
 
     if (p)
-    {
-        // With Vanilla you have to specify the file without extension,
-        // but make that optional.
-        if (M_StringEndsWith(myargv[p + 1], ".lmp"))
         {
-            M_StringCopy(file, myargv[p + 1], sizeof(file));
-        }
-        else
-        {
-            DEH_snprintf(file, sizeof(file), "%s.lmp", myargv[p+1]);
+            // With Vanilla you have to specify the file without extension,
+            // but make that optional.
+            if (M_StringEndsWith (myargv[p + 1], ".lmp"))
+                {
+                    M_StringCopy (file, myargv[p + 1], sizeof (file));
+                }
+            else
+                {
+                    DEH_snprintf (file, sizeof (file), "%s.lmp",
+                                  myargv[p + 1]);
+                }
+
+            if (D_AddFile (file))
+                {
+                    M_StringCopy (demolumpname, lumpinfo[numlumps - 1].name,
+                                  sizeof (demolumpname));
+                }
+            else
+                {
+                    // If file failed to load, still continue trying to play
+                    // the demo in the same way as Vanilla Doom.  This makes
+                    // tricks like "-playdemo demo1" possible.
+
+                    M_StringCopy (demolumpname, myargv[p + 1],
+                                  sizeof (demolumpname));
+                }
+
+            printf ("Playing demo %s.\n", file);
         }
 
-        if (D_AddFile(file))
-        {
-            M_StringCopy(demolumpname, lumpinfo[numlumps - 1].name,
-                         sizeof(demolumpname));
-        }
-        else
-        {
-            // If file failed to load, still continue trying to play
-            // the demo in the same way as Vanilla Doom.  This makes
-            // tricks like "-playdemo demo1" possible.
-
-            M_StringCopy(demolumpname, myargv[p + 1], sizeof(demolumpname));
-        }
-
-        printf("Playing demo %s.\n", file);
-    }
-
-    I_AtExit((atexit_func_t) G_CheckDemoStatus, true);
+    I_AtExit ((atexit_func_t)G_CheckDemoStatus, true);
 
     // Generate the WAD hash table.  Speed things up a bit.
-    W_GenerateHashTable();
+    W_GenerateHashTable ();
 
     // Load DEHACKED lumps from WAD files - but only if we give the right
     // command line parameter.
@@ -1601,94 +1627,97 @@ void D_DoomMain (void)
     // Load Dehacked patches from DEHACKED lumps contained in one of the
     // loaded PWAD files.
     //
-    if (M_ParmExists("-dehlump"))
-    {
-        int i, loaded = 0;
-
-        for (i = numiwadlumps; i < numlumps; ++i)
+    if (M_ParmExists ("-dehlump"))
         {
-            if (!strncmp(lumpinfo[i].name, "DEHACKED", 8))
-            {
-                DEH_LoadLump(i, false, false);
-                loaded++;
-            }
-        }
+            int i, loaded = 0;
 
-        printf("  loaded %i DEHACKED lumps from PWAD files.\n", loaded);
-    }
+            for (i = numiwadlumps; i < numlumps; ++i)
+                {
+                    if (!strncmp (lumpinfo[i].name, "DEHACKED", 8))
+                        {
+                            DEH_LoadLump (i, false, false);
+                            loaded++;
+                        }
+                }
+
+            printf ("  loaded %i DEHACKED lumps from PWAD files.\n", loaded);
+        }
 #endif
 
     // Set the gamedescription string. This is only possible now that
     // we've finished loading Dehacked patches.
-    D_SetGameDescription();
+    D_SetGameDescription ();
 
 #ifdef _WIN32
     // In -cdrom mode, we write savegames to c:\doomdata as well as configs.
-    if (M_ParmExists("-cdrom"))
-    {
-        savegamedir = configdir;
-    }
+    if (M_ParmExists ("-cdrom"))
+        {
+            savegamedir = configdir;
+        }
     else
 #endif
-    {
-        savegamedir = M_GetSaveGameDir(D_SaveGameIWADName(gamemission));
-    }
+        {
+            savegamedir = M_GetSaveGameDir (D_SaveGameIWADName (gamemission));
+        }
 
     // Check for -file in shareware
     if (modifiedgame)
-    {
-	// These are the lumps that will be checked in IWAD,
-	// if any one is not present, execution will be aborted.
-	char name[23][8]=
-	{
-	    "e2m1","e2m2","e2m3","e2m4","e2m5","e2m6","e2m7","e2m8","e2m9",
-	    "e3m1","e3m3","e3m3","e3m4","e3m5","e3m6","e3m7","e3m8","e3m9",
-	    "dphoof","bfgga0","heada1","cybra1","spida1d1"
-	};
-	int i;
+        {
+            // These are the lumps that will be checked in IWAD,
+            // if any one is not present, execution will be aborted.
+            char name[23][8]
+                = { "e2m1",   "e2m2",   "e2m3",   "e2m4",   "e2m5",    "e2m6",
+                    "e2m7",   "e2m8",   "e2m9",   "e3m1",   "e3m3",    "e3m3",
+                    "e3m4",   "e3m5",   "e3m6",   "e3m7",   "e3m8",    "e3m9",
+                    "dphoof", "bfgga0", "heada1", "cybra1", "spida1d1" };
+            int i;
 
-	if ( gamemode == shareware)
-	    I_Error(DEH_String("\nYou cannot -file with the shareware "
-			       "version. Register!"));
+            if (gamemode == shareware)
+                I_Error (DEH_String ("\nYou cannot -file with the shareware "
+                                     "version. Register!"));
 
-	// Check for fake IWAD with right name,
-	// but w/o all the lumps of the registered version.
-	if (gamemode == registered)
-	    for (i = 0;i < 23; i++)
-		if (W_CheckNumForName(name[i])<0)
-		    I_Error(DEH_String("\nThis is not the registered version."));
-    }
+            // Check for fake IWAD with right name,
+            // but w/o all the lumps of the registered version.
+            if (gamemode == registered)
+                for (i = 0; i < 23; i++)
+                    if (W_CheckNumForName (name[i]) < 0)
+                        I_Error (DEH_String (
+                            "\nThis is not the registered version."));
+        }
 
-    if (W_CheckNumForName("SS_START") >= 0
-     || W_CheckNumForName("FF_END") >= 0)
-    {
-        I_PrintDivider();
-        printf(" WARNING: The loaded WAD file contains modified sprites or\n"
-               " floor textures.  You may want to use the '-merge' command\n"
-               " line option instead of '-file'.\n");
-    }
+    if (W_CheckNumForName ("SS_START") >= 0
+        || W_CheckNumForName ("FF_END") >= 0)
+        {
+            I_PrintDivider ();
+            printf (
+                " WARNING: The loaded WAD file contains modified sprites or\n"
+                " floor textures.  You may want to use the '-merge' command\n"
+                " line option instead of '-file'.\n");
+        }
 
-    I_PrintStartupBanner(gamedescription);
-    PrintDehackedBanners();
+    I_PrintStartupBanner (gamedescription);
+    PrintDehackedBanners ();
 
     // Freedoom's IWADs are Boom-compatible, which means they usually
     // don't work in Vanilla (though FreeDM is okay). Show a warning
     // message and give a link to the website.
-    if (W_CheckNumForName("FREEDOOM") >= 0 && W_CheckNumForName("FREEDM") < 0)
-    {
-        printf(" WARNING: You are playing using one of the Freedoom IWAD\n"
-               " files, which might not work in this port. See this page\n"
-               " for more information on how to play using Freedoom:\n"
-               "   http://www.chocolate-doom.org/wiki/index.php/Freedoom\n");
-        I_PrintDivider();
-    }
+    if (W_CheckNumForName ("FREEDOOM") >= 0
+        && W_CheckNumForName ("FREEDM") < 0)
+        {
+            printf (
+                " WARNING: You are playing using one of the Freedoom IWAD\n"
+                " files, which might not work in this port. See this page\n"
+                " for more information on how to play using Freedoom:\n"
+                "   http://www.chocolate-doom.org/wiki/index.php/Freedoom\n");
+            I_PrintDivider ();
+        }
 
-    DEH_printf("I_Init: Setting up machine state.\n");
-    I_CheckIsScreensaver();
-    I_InitTimer();
-    I_InitJoystick();
-    I_InitSound(true);
-    I_InitMusic();
+    DEH_printf ("I_Init: Setting up machine state.\n");
+    I_CheckIsScreensaver ();
+    I_InitTimer ();
+    I_InitJoystick ();
+    I_InitSound (true);
+    I_InitMusic ();
 
 #ifdef FEATURE_MULTIPLAYER
     printf ("NET_Init: Init network subsystem.\n");
@@ -1696,7 +1725,7 @@ void D_DoomMain (void)
 #endif
 
     // Initial netgame startup. Connect to server etc.
-    D_ConnectNetGame();
+    D_ConnectNetGame ();
 
     // get skill / episode / map from parms
     startskill = sk_medium;
@@ -1712,13 +1741,13 @@ void D_DoomMain (void)
     // 0 disables all monsters.
     //
 
-    p = M_CheckParmWithArgs("-skill", 1);
+    p = M_CheckParmWithArgs ("-skill", 1);
 
     if (p)
-    {
-	startskill = myargv[p+1][0]-'1';
-	autostart = true;
-    }
+        {
+            startskill = myargv[p + 1][0] - '1';
+            autostart = true;
+        }
 
     //!
     // @arg <n>
@@ -1727,14 +1756,14 @@ void D_DoomMain (void)
     // Start playing on episode n (1-4)
     //
 
-    p = M_CheckParmWithArgs("-episode", 1);
+    p = M_CheckParmWithArgs ("-episode", 1);
 
     if (p)
-    {
-	startepisode = myargv[p+1][0]-'0';
-	startmap = 1;
-	autostart = true;
-    }
+        {
+            startepisode = myargv[p + 1][0] - '0';
+            startmap = 1;
+            autostart = true;
+        }
 
     timelimit = 0;
 
@@ -1746,12 +1775,12 @@ void D_DoomMain (void)
     // For multiplayer games: exit each level after n minutes.
     //
 
-    p = M_CheckParmWithArgs("-timer", 1);
+    p = M_CheckParmWithArgs ("-timer", 1);
 
     if (p)
-    {
-	timelimit = atoi(myargv[p+1]);
-    }
+        {
+            timelimit = atoi (myargv[p + 1]);
+        }
 
     //!
     // @category net
@@ -1763,9 +1792,9 @@ void D_DoomMain (void)
     p = M_CheckParm ("-avg");
 
     if (p)
-    {
-	timelimit = 20;
-    }
+        {
+            timelimit = 20;
+        }
 
     //!
     // @arg [<x> <y> | <xy>]
@@ -1775,40 +1804,40 @@ void D_DoomMain (void)
     // (Doom 2)
     //
 
-    p = M_CheckParmWithArgs("-warp", 1);
+    p = M_CheckParmWithArgs ("-warp", 1);
 
     if (p)
-    {
-        if (gamemode == commercial)
-            startmap = atoi (myargv[p+1]);
-        else
         {
-            startepisode = myargv[p+1][0]-'0';
-
-            if (p + 2 < myargc)
-            {
-                startmap = myargv[p+2][0]-'0';
-            }
+            if (gamemode == commercial)
+                startmap = atoi (myargv[p + 1]);
             else
-            {
-                startmap = 1;
-            }
+                {
+                    startepisode = myargv[p + 1][0] - '0';
+
+                    if (p + 2 < myargc)
+                        {
+                            startmap = myargv[p + 2][0] - '0';
+                        }
+                    else
+                        {
+                            startmap = 1;
+                        }
+                }
+            autostart = true;
         }
-        autostart = true;
-    }
 
     // Undocumented:
     // Invoked by setup to test the controls.
 
-    p = M_CheckParm("-testcontrols");
+    p = M_CheckParm ("-testcontrols");
 
     if (p > 0)
-    {
-        startepisode = 1;
-        startmap = 1;
-        autostart = true;
-        testcontrols = true;
-    }
+        {
+            startepisode = 1;
+            startmap = 1;
+            autostart = true;
+            testcontrols = true;
+        }
 
     // Check for load game parameter
     // We do this here and save the slot number, so that the network code
@@ -1821,53 +1850,53 @@ void D_DoomMain (void)
     // Load the game in slot s.
     //
 
-    p = M_CheckParmWithArgs("-loadgame", 1);
+    p = M_CheckParmWithArgs ("-loadgame", 1);
 
     if (p)
-    {
-        startloadgame = atoi(myargv[p+1]);
-    }
+        {
+            startloadgame = atoi (myargv[p + 1]);
+        }
     else
-    {
-        // Not loading a game
-        startloadgame = -1;
-    }
+        {
+            // Not loading a game
+            startloadgame = -1;
+        }
 
-    DEH_printf("M_Init: Init miscellaneous info.\n");
+    DEH_printf ("M_Init: Init miscellaneous info.\n");
     M_Init ();
 
-    DEH_printf("R_Init: Init DOOM refresh daemon - ");
+    DEH_printf ("R_Init: Init DOOM refresh daemon - ");
     R_Init ();
 
-    DEH_printf("\nP_Init: Init Playloop state.\n");
+    DEH_printf ("\nP_Init: Init Playloop state.\n");
     P_Init ();
 
-    DEH_printf("S_Init: Setting up sound.\n");
+    DEH_printf ("S_Init: Setting up sound.\n");
     S_Init (sfxVolume * 8, musicVolume * 8);
 
-    DEH_printf("D_CheckNetGame: Checking network game status.\n");
+    DEH_printf ("D_CheckNetGame: Checking network game status.\n");
     D_CheckNetGame ();
 
-    PrintGameVersion();
+    PrintGameVersion ();
 
-    DEH_printf("HU_Init: Setting up heads up display.\n");
+    DEH_printf ("HU_Init: Setting up heads up display.\n");
     HU_Init ();
 
-    DEH_printf("ST_Init: Init status bar.\n");
+    DEH_printf ("ST_Init: Init status bar.\n");
     ST_Init ();
 
     // If Doom II without a MAP01 lump, this is a store demo.
     // Moved this here so that MAP01 isn't constantly looked up
     // in the main loop.
 
-    if (gamemode == commercial && W_CheckNumForName("map01") < 0)
+    if (gamemode == commercial && W_CheckNumForName ("map01") < 0)
         storedemo = true;
 
-    if (M_CheckParmWithArgs("-statdump", 1))
-    {
-        I_AtExit(StatDump, true);
-        DEH_printf("External statistics registered.\n");
-    }
+    if (M_CheckParmWithArgs ("-statdump", 1))
+        {
+            I_AtExit (StatDump, true);
+            DEH_printf ("External statistics registered.\n");
+        }
 
     //!
     // @arg <x>
@@ -1877,45 +1906,44 @@ void D_DoomMain (void)
     // Record a demo named x.lmp.
     //
 
-    p = M_CheckParmWithArgs("-record", 1);
+    p = M_CheckParmWithArgs ("-record", 1);
 
     if (p)
-    {
-		G_RecordDemo (myargv[p+1]);
-		autostart = true;
-    }
+        {
+            G_RecordDemo (myargv[p + 1]);
+            autostart = true;
+        }
 
-    p = M_CheckParmWithArgs("-playdemo", 1);
+    p = M_CheckParmWithArgs ("-playdemo", 1);
     if (p)
-    {
-		singledemo = true;              // quit after one demo
-		G_DeferedPlayDemo (demolumpname);
-		D_DoomLoop ();
-        return;
-    }
+        {
+            singledemo = true; // quit after one demo
+            G_DeferedPlayDemo (demolumpname);
+            D_DoomLoop ();
+            return;
+        }
 
-    p = M_CheckParmWithArgs("-timedemo", 1);
+    p = M_CheckParmWithArgs ("-timedemo", 1);
     if (p)
-    {
-		G_TimeDemo (demolumpname);
-		D_DoomLoop ();
-        return;
-    }
+        {
+            G_TimeDemo (demolumpname);
+            D_DoomLoop ();
+            return;
+        }
 
     if (startloadgame >= 0)
-    {
-        M_StringCopy(file, P_SaveGameFile(startloadgame), sizeof(file));
-        G_LoadGame(file);
-    }
+        {
+            M_StringCopy (file, P_SaveGameFile (startloadgame), sizeof (file));
+            G_LoadGame (file);
+        }
 
-    if (gameaction != ga_loadgame )
-    {
-		if (autostart || netgame)
-			G_InitNew (startskill, startepisode, startmap);
-		else
-			D_StartTitle ();                // start up intro loop
-    }
+    if (gameaction != ga_loadgame)
+        {
+            if (autostart || netgame)
+                G_InitNew (startskill, startepisode, startmap);
+            else
+                D_StartTitle (); // start up intro loop
+        }
 
     D_DoomLoop ();
 }
-

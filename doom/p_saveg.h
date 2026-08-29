@@ -16,7 +16,6 @@
 //	Savegame I/O, archiving, persistence.
 //
 
-
 #ifndef __P_SAVEG__
 #define __P_SAVEG__
 
@@ -28,21 +27,21 @@
 
 // temporary filename to use while saving.
 
-char *P_TempSaveGameFile(void);
+char *P_TempSaveGameFile (void);
 
 // filename to use for a savegame slot
 
-char *P_SaveGameFile(int slot);
+char *P_SaveGameFile (int slot);
 
 // Savegame file header read/write functions
 
-boolean P_ReadSaveGameHeader(void);
-void P_WriteSaveGameHeader(char *description);
+boolean P_ReadSaveGameHeader (void);
+void P_WriteSaveGameHeader (char *description);
 
 // Savegame end-of-file read/write functions
 
-boolean P_ReadSaveGameEOF(void);
-void P_WriteSaveGameEOF(void);
+boolean P_ReadSaveGameEOF (void);
+void P_WriteSaveGameEOF (void);
 
 // Persistent storage/archiving.
 // These are the load / save game routines.
@@ -57,6 +56,5 @@ void P_UnArchiveSpecials (void);
 
 extern FILE *save_stream;
 extern boolean savegame_error;
-
 
 #endif
