@@ -362,7 +362,7 @@ pub unsafe extern "C" fn Z_Init() {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn Z_Malloc(size: c_int, tag: c_int, owner: *mut *mut u8) -> *mut u8 {
+pub unsafe extern "C" fn Z_DGMalloc(size: c_int, tag: c_int, owner: *mut *mut u8) -> *mut u8 {
     unsafe {
         let owner = NonNull::new(owner);
         let tag = tag.try_into().unwrap_or(0);

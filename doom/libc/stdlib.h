@@ -14,10 +14,10 @@ unsigned long strtoul (char *nptr, char **endptr, int ibase);
 
 int atoi (const char *s);
 
-// TODO(doomsat): implement lmao
-void *malloc (size_t size);
+// void *Z_Malloc (int size, int tag, void *ptr);
+void *_doomsat_malloc (size_t size, char *file, int line);
+#define doomsat_malloc(size) _doomsat_malloc(size, __FILE__, __LINE__)
 
-void *doomsat_malloc (size_t size);
 void doomsat_free (void *ptr);
 void *doomsat_calloc (size_t count, size_t size);
 void *doomsat_realloc (void *ptr, size_t size);

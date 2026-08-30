@@ -1,4 +1,4 @@
-use doomstm::{Doom, DoomCallbacks};
+use doomstm::{Doom, DoomCallbacks, allocator::memory_stats};
 use std::{
     cell::UnsafeCell,
     io::{Read as _, Write as _},
@@ -98,8 +98,12 @@ fn main() {
     let wad = include_bytes!("../../../wad/doom1.wad");
     let mut doom = Doom::create(&mut callbacks, wad, DTCM_HEAP.access(), SRAM_HEAP.access());
 
+    let mut max_usage = 0;
     loop {
         doom.tick();
+        let usage = unsafe { memory_stats() };
+        max_usage = max_usage.max(usage);
+        println!("max memory usage so far: {} bytes", max_usage);
         let state = doom.get_state();
         state
             .with_serialized(|s| {

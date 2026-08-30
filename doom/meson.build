@@ -34,8 +34,6 @@ doom_core = files(
     'doomstat.c',
     'dstrings.c',
     'dummy.c',
-    'f_finale.c',
-    'f_wipe.c',
     'g_game.c',
     'hu_lib.c',
     'hu_stuff.c',
@@ -125,6 +123,8 @@ if mode == 'stm'
         'libc/stdlib.c',
         'libc/string.c',
         'd_iwad_stm.c',
+        'f_finale_stm.c',
+        'f_wipe_stm.c',
         'i_system_stm.c',
         'm_config_stm.c',
         'p_saveg_stm.c',
@@ -134,6 +134,8 @@ endif
 if mode == 'client'
     doom_core += files(
         'd_iwad.c',
+        'f_finale.c',
+        'f_wipe.c',
         'i_system.c',
         'm_config.c',
         'p_saveg.c',

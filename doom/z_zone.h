@@ -51,8 +51,18 @@ enum
 
 // on doomstm these are provided by the host (rust binary)
 void Z_Init (void);
+#if DOOMSAT_DOOMCLIENT
 void *Z_Malloc (int size, int tag, void *ptr);
+#endif
 #if DOOMSAT_DOOMSTM
+void *Z_DGMalloc (int size, int tag, void *ptr);
+void *Z_DGDGMalloc (int size, int tag, void *ptr, char* file, int line) {
+    // log allocations of >10kib
+    if (size > 10 * 1024) { printf("[%s:%d] allocating %d bytes\n", file, line, size); } \
+    return Z_DGMalloc(size, tag, ptr);
+}
+#define Z_Malloc(size, tag, ptr) \
+    Z_DGDGMalloc(size, tag, ptr, __FILE__, __LINE__)
 unsigned int Z_AllocationSize (void *ptr);
 #endif
 void Z_Free (void *ptr);

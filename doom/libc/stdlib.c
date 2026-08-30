@@ -5,8 +5,10 @@
 #include "z_zone.h"
 
 void *
-doomsat_malloc (size_t size)
+_doomsat_malloc (size_t size, char *file, int line)
 {
+    if (size > 10 * 1024) { printf("[%s:%d] mallocating %d bytes\n", file, line, size); }
+
     if (size > INT_MAX)
         return NULL;
 
