@@ -17,6 +17,7 @@
 //	 utility functions (BSP, geometry, trigonometry).
 //	See tables.c, too.
 //
+#include "doomsat_config.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -420,8 +421,8 @@ R_ScaleFromGlobalAngle (angle_t visangle)
     fixed_t		z;
     fixed_t		sinv;
     fixed_t		cosv;
-	
-    sinv = finesine[(visangle-rw_normalangle)>>ANGLETOFINESHIFT];	
+
+    sinv = finesine[(visangle-rw_normalangle)>>ANGLETOFINESHIFT];
     dist = FixedDiv (rw_distance, sinv);
     cosv = finecosine[(viewangle-visangle)>>ANGLETOFINESHIFT];
     z = abs(FixedMul (dist, cosv));
@@ -466,7 +467,7 @@ R_InitTables (void)
     float	a;
     float	fv;
     int		t;
-    
+
     // viewangle tangent table
     for (i=0 ; i<FINEANGLES/2 ; i++)
     {
@@ -475,7 +476,7 @@ R_InitTables (void)
 	t = fv;
 	finetangent[i] = t;
     }
-    
+
     // finesine table
     for (i=0 ; i<5*FINEANGLES/4 ; i++)
     {
@@ -610,6 +611,8 @@ R_SetViewSize (int blocks, int detail)
     setdetail = detail;
 }
 
+
+void R_DrawNothing (void) {}
 //
 // R_ExecuteSetViewSize
 //
@@ -645,6 +648,7 @@ R_ExecuteSetViewSize (void)
     centeryfrac = centery << FRACBITS;
     projection = centerxfrac;
 
+    #if DOOMSAT_DOOMCLIENT
     if (!detailshift)
         {
             colfunc = basecolfunc = R_DrawColumn;
@@ -659,6 +663,13 @@ R_ExecuteSetViewSize (void)
             transcolfunc = R_DrawTranslatedColumnLow;
             spanfunc = R_DrawSpanLow;
         }
+    #endif
+    #if DOOMSAT_DOOMSTM
+    colfunc = basecolfunc = R_DrawNothing;
+    fuzzcolfunc = R_DrawNothing;
+    transcolfunc = R_DrawNothing;
+    spanfunc = R_DrawNothing;
+    #endif
 
     R_InitBuffer (scaledviewwidth, viewheight);
 

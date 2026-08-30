@@ -18,6 +18,10 @@ size: build
 server:
     cd crates/doomstm && cargo run --example host
 
+debug-server:
+    cd crates/doomstm && cargo build --example host
+    cd crates/doomstm && lldb -o 'settings set stop-line-count-before 2' -o 'settings set stop-line-count-after 3' -o 'process handle --stop true --notify true --pass true SIGSEGV SIGBUS SIGILL SIGFPE SIGABRT' -o run -o bt -- target/debug/examples/host
+
 client:
     cd crates/doomclient && cargo run --example host
 

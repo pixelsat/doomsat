@@ -6,7 +6,7 @@ project(
     default_options: [
         'c_std=c99',
         'warning_level=1',
-        'optimization=s',
+        # 'optimization=s',
         'debug=true',
     ],
 )
@@ -87,7 +87,6 @@ doom_core = files(
     'st_lib.c',
     'st_stuff.c',
     'tables.c',
-    'v_video.c',
     'w_checksum.c',
     'w_file.c',
     'w_main.c',
@@ -128,6 +127,7 @@ if mode == 'stm'
         'i_system_stm.c',
         'm_config_stm.c',
         'p_saveg_stm.c',
+        'v_video_stm.c',
     )
 endif
 
@@ -140,6 +140,7 @@ if mode == 'client'
         'm_config.c',
         'p_saveg.c',
         'statdump.c',
+        'v_video.c',
         'w_file_stdc.c',
         'z_zone.c',
     )

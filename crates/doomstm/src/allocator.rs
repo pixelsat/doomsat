@@ -481,6 +481,17 @@ pub unsafe extern "C" fn Z_FreeMemory() -> c_int {
     }
 }
 
+pub unsafe fn memory_stats() -> i32 {
+    unsafe {
+        let size = (Bank::Dtcm.access().size + Bank::Sram.access().size)
+            .try_into()
+            .unwrap_or(c_int::MAX);
+        let free = (Bank::Dtcm.access().free_memory() + Bank::Sram.access().free_memory())
+            .try_into()
+            .unwrap_or(c_int::MAX);
+        size - free
+    }
+}
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn Z_ZoneSize() -> c_int {
     (Bank::Dtcm.access().size + Bank::Sram.access().size)

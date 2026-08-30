@@ -23,11 +23,11 @@
 //-----------------------------------------------------------------------------
 
 static const char rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
-
 #include "i_video.h"
 #include "config.h"
 #include "d_event.h"
 #include "d_main.h"
+#include "doomsat_config.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "v_video.h"
@@ -301,9 +301,15 @@ I_InitGraphics (void)
             printf ("I_InitGraphics: Auto-scaling factor: %d\n", fb_scaling);
         }
 
-    /* Allocate screen to draw to */
-    I_VideoBuffer = (byte *)Z_Malloc (SCREENWIDTH * SCREENHEIGHT, PU_STATIC,
-                                      NULL); // For DOOM to draw on
+/* Allocate screen to draw to */
+#if DOOMSAT_DOOMSTM
+    I_VideoBuffer = NULL;
+#endif
+#if DOOMSAT_DOOMCLIENT
+    I_VideoBuffer
+        = (byte *)Z_Malloc (SCREENWIDTH * SCREENHEIGHT, PU_STATIC,
+                            NULL); // For DOOM to draw onint fb_scaling = 1;
+#endif
 
     screenvisible = true;
 
@@ -337,6 +343,7 @@ I_UpdateNoBlit (void)
 // I_FinishUpdate
 //
 
+#if DOOMSAT_DOOMCLIENT
 void
 I_FinishUpdate (void)
 {
@@ -408,6 +415,13 @@ I_FinishUpdate (void)
 
     DG_DrawFrame ();
 }
+#endif
+#if DOOMSAT_DOOMSTM
+void
+I_FinishUpdate (void)
+{
+}
+#endif
 
 //
 // I_ReadScreen
