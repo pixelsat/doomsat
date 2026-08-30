@@ -102,8 +102,10 @@ fn main() {
     loop {
         doom.tick();
         let usage = unsafe { memory_stats() };
-        max_usage = max_usage.max(usage);
-        println!("max memory usage so far: {} bytes", max_usage);
+        if usage > max_usage {
+            max_usage = max_usage.max(usage);
+            println!("max memory usage so far: {} bytes", max_usage);
+        }
         let state = doom.get_state();
         state
             .with_serialized(|s| {

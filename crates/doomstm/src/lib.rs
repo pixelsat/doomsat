@@ -52,17 +52,17 @@ impl Callbacks {
 unsafe impl Send for Callbacks {}
 unsafe impl Sync for Callbacks {}
 
-const ARGC: c_int = 3;
+const ARGC: c_int = 8;
 
 static mut ARGV: [*mut c_char; ARGC as usize] = [
     c"doomstm".as_ptr().cast_mut(),
     c"-iwad".as_ptr().cast_mut(),
     c"doomsat.wad".as_ptr().cast_mut(),
-    // c"-skill".as_ptr().cast_mut(),
-    // c"5".as_ptr().cast_mut(),
-    // c"-warp".as_ptr().cast_mut(),
-    // c"1".as_ptr().cast_mut(),
-    // c"9".as_ptr().cast_mut(),
+    c"-skill".as_ptr().cast_mut(),
+    c"5".as_ptr().cast_mut(),
+    c"-warp".as_ptr().cast_mut(),
+    c"1".as_ptr().cast_mut(),
+    c"9".as_ptr().cast_mut(),
 ];
 
 pub struct Doom<'a, T: DoomCallbacks> {

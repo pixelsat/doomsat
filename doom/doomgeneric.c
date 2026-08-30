@@ -26,7 +26,9 @@ doomgeneric_Create (int argc, char **argv, const uint8_t *wad_data,
 
     M_FindResponseFile ();
 
+    #if DOOMSAT_DOOMCLIENT
     DG_ScreenBuffer = malloc (DOOMGENERIC_RESX * DOOMGENERIC_RESY * 4);
+    #endif
 
     DG_Init ();
 
