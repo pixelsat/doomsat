@@ -402,8 +402,8 @@ menu_t SaveDef = { load_end, &MainDef, SaveMenu, M_DrawSave, 80, 54, 0 };
 void
 M_ReadSaveStrings (void)
 {
-    // if stm, we just ... don't do anything lol
-    #if DOOMSAT_DOOMCLIENT
+// if stm, we just ... don't do anything lol
+#if DOOMSAT_DOOMCLIENT
     FILE *handle;
     int i;
     char name[256];
@@ -424,7 +424,7 @@ M_ReadSaveStrings (void)
             fclose (handle);
             LoadMenu[i].status = 1;
         }
-    #endif
+#endif
 }
 
 //

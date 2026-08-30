@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <string.h>
 
+uint8_t *doomsat_wad_data;
+size_t doomsat_wad_length;
+
 extern int showMessages; // m_menu.c:73, not exported
 extern int screenSize;   // :81
 extern int st_palette;   // st_stuff.c:934

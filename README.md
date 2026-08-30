@@ -1,7 +1,6 @@
 ## rough todo list
 
 * set up proper error handling
-* get doomstm compiling w/o stdlib
 * wad pruning
     * use a declarative python script to prune from shareware
     * as we prune, slowly work on macro'ing out every renderer path fails in doomstm

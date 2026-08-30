@@ -1,3 +1,6 @@
+#ifndef DOOMSAT_STDLIB_H
+#define DOOMSAT_STDLIB_H
+
 #define __need_size_t
 #define __need_NULL
 #include <stddef.h>
@@ -23,3 +26,5 @@ void *doomsat_realloc (void *ptr, size_t size);
 #define free doomsat_free
 #define calloc doomsat_calloc
 #define realloc doomsat_realloc
+
+#endif

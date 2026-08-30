@@ -162,8 +162,8 @@ struct doomsat_state
 #if DOOMSAT_DOOMSTM
 struct doomsat_state doomsat_GetState (void);
 
-uint8_t *doomsat_wad_data;
-size_t doomsat_wad_length;
+extern uint8_t *doomsat_wad_data;
+extern size_t doomsat_wad_length;
 #endif
 
 #if DOOMSAT_DOOMCLIENT

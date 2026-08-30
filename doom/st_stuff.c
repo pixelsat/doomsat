@@ -30,8 +30,8 @@
 #include "deh_main.h"
 #include "deh_misc.h"
 #include "doomdef.h"
-#include "doomsat_config.h"
 #include "doomkeys.h"
+#include "doomsat_config.h"
 
 #include "g_game.h"
 

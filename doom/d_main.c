@@ -1892,13 +1892,13 @@ D_DoomMain (void)
     if (gamemode == commercial && W_CheckNumForName ("map01") < 0)
         storedemo = true;
 
-    #if DOOMSAT_DOOMCLIENT
+#if DOOMSAT_DOOMCLIENT
     if (M_CheckParmWithArgs ("-statdump", 1))
         {
             I_AtExit (StatDump, true);
             DEH_printf ("External statistics registered.\n");
         }
-    #endif
+#endif
 
     //!
     // @arg <x>

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "doomtype.h"
 #include "i_system.h"
 #include "m_argv.h"
@@ -5,7 +6,6 @@
 #include "z_zone.h"
 #include <stddef.h>
 #include <string.h>
-#include "config.h"
 
 // never called lol
 byte *

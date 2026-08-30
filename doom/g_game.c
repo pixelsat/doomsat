@@ -1461,9 +1461,9 @@ G_DoCompleted (void)
     viewactive = false;
     automapactive = false;
 
-    #if DOOMSAT_DOOMCLIENT
+#if DOOMSAT_DOOMCLIENT
     StatCopy (&wminfo);
-    #endif
+#endif
 
     WI_Start (&wminfo);
 }
@@ -1528,8 +1528,8 @@ G_LoadGame (char *name)
 void
 G_DoLoadGame (void)
 {
-    // if stm, we just ... don't do anything lol
-    #if DOOMSAT_DOOMCLIENT
+// if stm, we just ... don't do anything lol
+#if DOOMSAT_DOOMCLIENT
     int savedleveltime;
 
     gameaction = ga_nothing;
@@ -1572,7 +1572,7 @@ G_DoLoadGame (void)
 
     // draw the pattern into the back screen
     R_FillBackScreen ();
-    #endif
+#endif
 }
 
 //
@@ -1591,8 +1591,8 @@ G_SaveGame (int slot, char *description)
 void
 G_DoSaveGame (void)
 {
-    // if stm, we just ... don't do anything lol
-    #if DOOMSAT_DOOMCLIENT
+// if stm, we just ... don't do anything lol
+#if DOOMSAT_DOOMCLIENT
     char *savegame_file;
     char *temp_savegame_file;
     char *recovery_savegame_file;
@@ -1667,7 +1667,7 @@ G_DoSaveGame (void)
 
     // draw the pattern into the back screen
     R_FillBackScreen ();
-    #endif
+#endif
 }
 
 //

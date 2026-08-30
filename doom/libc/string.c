@@ -65,17 +65,18 @@ strcmp (const char *s1, const char *s2)
     return (*(unsigned char *)s1) - (*(unsigned char *)s2);
 }
 int
-strncmp(const char *s1, const char *s2, size_t n)
+strncmp (const char *s1, const char *s2, size_t n)
 {
     if (n == 0)
         return 0;
 
-    while (n-- != 0 && *s1 == *s2) {
-        if (n == 0 || *s1 == '\0')
-            break;
-        s1++;
-        s2++;
-    }
+    while (n-- != 0 && *s1 == *s2)
+        {
+            if (n == 0 || *s1 == '\0')
+                break;
+            s1++;
+            s2++;
+        }
 
     return (*(unsigned char *)s1) - (*(unsigned char *)s2);
 }
@@ -128,18 +129,19 @@ strrchr (const char *s, int i)
 }
 
 char *
-strncpy(char *dst0, const char *src0, size_t count)
+strncpy (char *dst0, const char *src0, size_t count)
 {
-    char       *dscan;
+    char *dscan;
     const char *sscan;
 
     dscan = dst0;
     sscan = src0;
-    while (count > 0) {
-        --count;
-        if ((*dscan++ = *sscan++) == '\0')
-            break;
-    }
+    while (count > 0)
+        {
+            --count;
+            if ((*dscan++ = *sscan++) == '\0')
+                break;
+        }
     while (count-- > 0)
         *dscan++ = '\0';
 
@@ -147,23 +149,24 @@ strncpy(char *dst0, const char *src0, size_t count)
 }
 
 char *
-strstr(const char *hs, const char *ne)
+strstr (const char *hs, const char *ne)
 {
     size_t i;
-    int    c = ne[0];
+    int c = ne[0];
 
     if (c == 0)
         return (char *)hs;
 
-    for (; hs[0] != '\0'; hs++) {
-        if (hs[0] != c)
-            continue;
-        for (i = 1; ne[i] != 0; i++)
-            if (hs[i] != ne[i])
-                break;
-        if (ne[i] == '\0')
-            return (char *)hs;
-    }
+    for (; hs[0] != '\0'; hs++)
+        {
+            if (hs[0] != c)
+                continue;
+            for (i = 1; ne[i] != 0; i++)
+                if (hs[i] != ne[i])
+                    break;
+            if (ne[i] == '\0')
+                return (char *)hs;
+        }
 
     return NULL;
 }

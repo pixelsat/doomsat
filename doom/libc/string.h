@@ -1,3 +1,6 @@
+#ifndef DOOMSAT_STRING_H
+#define DOOMSAT_STRING_H
+
 #define __need_size_t
 #define __need_NULL
 #include <stddef.h>
@@ -32,3 +35,5 @@ char *strrchr (const char *s, int i);
 char *strncpy (char *dst0, const char *src0, size_t count);
 
 char *strstr (const char *hs, const char *ne);
+
+#endif
