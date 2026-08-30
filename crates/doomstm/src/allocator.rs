@@ -3,7 +3,7 @@
 
 use core::{
     cell::UnsafeCell,
-    ffi::{c_char, c_int, c_void},
+    ffi::{c_char, c_int, c_uint, c_void},
     mem::{self, MaybeUninit},
     ptr::{NonNull, null_mut},
 };
@@ -103,6 +103,7 @@ struct Zone {
     size: usize,
     start: *mut u8,
     sentinel: Block,
+    initialized: bool,
 }
 impl Zone {
     unsafe fn new(storage: &'static mut [u8], size: usize) -> Zone {
@@ -112,10 +113,15 @@ impl Zone {
             start,
             size,
             sentinel: Block::sentinel(),
+            initialized: false,
         }
     }
     // not in new bc reutrning Zone moves it etc. etc.
     unsafe fn init(&mut self) {
+        if self.initialized {
+            return;
+        }
+
         let first = self.start as *mut Block;
 
         unsafe {
@@ -129,6 +135,8 @@ impl Zone {
 
         self.sentinel.next = first;
         self.sentinel.prev = first;
+
+        self.initialized = true;
     }
     fn allocation_size(requested: usize) -> usize {
         let raw = (requested + size_of::<Block>()).next_multiple_of(align_of::<Block>());
@@ -372,6 +380,28 @@ pub unsafe extern "C" fn Z_Malloc(size: c_int, tag: c_int, owner: *mut *mut u8) 
         } else {
             panic!("out of memory")
         }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn Z_AllocationSize(ptr: *mut u8) -> c_uint {
+    unsafe {
+        for zone in [Bank::Dtcm, Bank::Sram] {
+            let zone = zone.access();
+            if zone.contains_payload(ptr) {
+                return Zone::block_for(ptr)
+                    .map(|block| {
+                        (*block.as_ptr())
+                            .size
+                            .saturating_sub(size_of::<Block>())
+                            .try_into()
+                            .unwrap_or(c_uint::MAX)
+                    })
+                    .unwrap_or(0);
+            }
+        }
+
+        0
     }
 }
 

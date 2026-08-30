@@ -18,16 +18,38 @@ impl<const N: usize> SimpleZone<N> {
     }
 }
 
-static DTCM_HEAP: SimpleZone<{ 1024 * 512 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
-static SRAM_HEAP: SimpleZone<{ 1024 * 512 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 512]));
+static DTCM_HEAP: SimpleZone<{ 1024 * 2048 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 2048]));
+static SRAM_HEAP: SimpleZone<{ 1024 * 2048 }> = SimpleZone(UnsafeCell::new([0u8; 1024 * 2048]));
 
 struct DoomStd {
     initial: Instant,
     key_events: Receiver<(bool, u8)>,
+    stdout: std::io::Stdout,
+    stderr: std::io::Stderr,
 }
 impl DoomCallbacks for DoomStd {
     fn log(&mut self, string: &str) {
         println!("[doomstm] {}", string);
+    }
+
+    fn putc_stdout(&mut self, ch: u8) {
+        self.stdout
+            .write_all(&[ch])
+            .expect("failed to write stdout");
+    }
+
+    fn putc_stderr(&mut self, ch: u8) {
+        self.stderr
+            .write_all(&[ch])
+            .expect("failed to write stderr");
+    }
+
+    fn flush_stdout(&mut self) {
+        self.stdout.flush().expect("failed to flush stdout");
+    }
+
+    fn flush_stderr(&mut self) {
+        self.stderr.flush().expect("failed to flush stderr");
     }
 
     fn sleep(&mut self, ms: u32) {
@@ -70,6 +92,8 @@ fn main() {
     let mut callbacks = DoomStd {
         initial: Instant::now(),
         key_events,
+        stdout: std::io::stdout(),
+        stderr: std::io::stderr(),
     };
     let wad = include_bytes!("../../../wad/doom1.wad");
     let mut doom = Doom::create(&mut callbacks, wad, DTCM_HEAP.access(), SRAM_HEAP.access());

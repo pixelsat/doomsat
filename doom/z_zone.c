@@ -16,9 +16,6 @@
 //	Zone Memory Allocation. Neat.
 //
 
-// stm provides its own allocator
-#if !DOOMSAT_DOOMSTM
-
 #include "z_zone.h"
 #include "doomtype.h"
 #include "i_system.h"
@@ -463,5 +460,3 @@ Z_ZoneSize (void)
 {
     return mainzone->size;
 }
-
-#endif

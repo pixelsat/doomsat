@@ -101,7 +101,7 @@ W_OpenFile (char *path)
             return result;
         }
 #endif
-
+#if DOOMSAT_DOOMCLIENT
     int i;
 
     //!
@@ -129,6 +129,7 @@ W_OpenFile (char *path)
         }
 
     return result;
+#endif
 }
 
 void

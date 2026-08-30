@@ -12,11 +12,15 @@ use shared::doom_sys;
 
 use crate::allocator::setup_zones;
 
-mod sys;
 pub mod allocator;
+mod sys;
 
 pub trait DoomCallbacks {
     fn log(&mut self, string: &str);
+    fn putc_stdout(&mut self, ch: u8);
+    fn putc_stderr(&mut self, ch: u8);
+    fn flush_stdout(&mut self);
+    fn flush_stderr(&mut self);
     fn sleep(&mut self, ms: u32);
     fn get_elapsed(&mut self) -> core::time::Duration;
     fn get_key_event(&mut self) -> Option<(bool, u8)>;
@@ -72,11 +76,20 @@ impl Drop for Restore {
     }
 }
 impl<'a, T: DoomCallbacks> Doom<'a, T> {
-    pub fn create(callbacks: &'a mut T, wad: &'a [u8], dtcm_zone: &'static mut [u8], sram_zone: &'static mut [u8]) -> Self {
-        let mut doom = Self { callbacks, _wad: wad };
+    pub fn create(
+        callbacks: &'a mut T,
+        wad: &'a [u8],
+        dtcm_zone: &'static mut [u8],
+        sram_zone: &'static mut [u8],
+    ) -> Self {
+        let mut doom = Self {
+            callbacks,
+            _wad: wad,
+        };
         let _restore = doom.setup();
 
         setup_zones(dtcm_zone, sram_zone);
+        unsafe { allocator::Z_Init() };
 
         unsafe {
             doom_sys::doomgeneric_Create(
@@ -104,7 +117,8 @@ impl<'a, T: DoomCallbacks> Doom<'a, T> {
         unsafe { doom_sys::doomsat_GetState() }.into()
     }
     pub fn with_screen<F>(&mut self, f: F)
-        where F: FnOnce(&[u32; 640 * 400])
+    where
+        F: FnOnce(&[u32; 640 * 400]),
     {
         let pointer = unsafe { doom_sys::DG_ScreenBuffer };
         if pointer.is_null() {

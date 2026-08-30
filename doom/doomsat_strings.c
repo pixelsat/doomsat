@@ -1,6 +1,6 @@
 #include "doomsat_strings.h"
 #include "d_englsh.h"
-#include <_stdio.h>
+#include <stdio.h>
 
 char
 strcmp_ (char *str1, char *str2)
