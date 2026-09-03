@@ -43,9 +43,4 @@ void AM_Stop (void);
 
 extern cheatseq_t cheat_amap;
 
-struct doomsat_state;
-
-void AM_DoomsatGetState (struct doomsat_state *state);
-void AM_DoomsatLoadState (struct doomsat_state *state);
-void AM_DoomsatInitRenderer (void);
 #endif

@@ -1110,30 +1110,6 @@ P_UpdateSpecials (void)
             }
 }
 
-// pixelsat, used to shuffle textures/flats for animated stuff
-void
-P_UpdatePicAnimations (int animationtime)
-{
-    anim_t *anim;
-    int pic;
-    int i;
-
-    //	ANIMATE FLATS AND TEXTURES GLOBALLY
-    for (anim = anims; anim < lastanim; anim++)
-        {
-            for (i = anim->basepic; i < anim->basepic + anim->numpics; i++)
-                {
-                    pic = anim->basepic
-                          + ((animationtime / anim->speed + i)
-                             % anim->numpics);
-                    if (anim->istexture)
-                        texturetranslation[i] = pic;
-                    else
-                        flattranslation[i] = pic;
-                }
-        }
-}
-
 //
 // Donut overrun emulation
 //

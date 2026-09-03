@@ -31,7 +31,6 @@
 #include "deh_misc.h"
 #include "doomdef.h"
 #include "doomkeys.h"
-#include "doomsat_config.h"
 
 #include "g_game.h"
 
@@ -369,7 +368,7 @@ static boolean oldweaponsowned[NUMWEAPONS];
 static int st_facecount = 0;
 
 // current face index, used by w_faces
-/*static*/ int st_faceindex = 0;
+static int st_faceindex = 0;
 
 // holds key-type for each key box on bar
 static int keyboxes[3];
@@ -918,7 +917,7 @@ ST_Ticker (void)
     st_oldhealth = plyr->health;
 }
 
-/*static*/ int st_palette = 0;
+static int st_palette = 0;
 
 void
 ST_doPaletteStuff (void)
@@ -1044,16 +1043,12 @@ ST_diffDraw (void)
 void
 ST_Drawer (boolean fullscreen, boolean refresh)
 {
-    if (fullscreen || refresh)
-        printf ("fullscreen: %d, refresh: %d\n", fullscreen, refresh);
 
     st_statusbaron = (!fullscreen) || automapactive;
     st_firsttime = st_firsttime || refresh;
 
-    // The client applies the authoritative palette from doomsat_state.
-#if !DOOMSAT_DOOMCLIENT
+    // Do red-/gold-shifts from damage/items
     ST_doPaletteStuff ();
-#endif
 
     // If just after ST_Start(), refresh all
     if (st_firsttime)
@@ -1333,12 +1328,4 @@ ST_Init (void)
 {
     ST_loadData ();
     st_backing_screen = (byte *)Z_Malloc (ST_WIDTH * ST_HEIGHT, PU_STATIC, 0);
-}
-
-void
-ST_DoomsatLoadPalette (void)
-{
-    byte *pal;
-    pal = (byte *)W_CacheLumpNum (lu_palette, PU_CACHE) + st_palette * 768;
-    I_SetPalette (pal);
 }

@@ -91,6 +91,5 @@ W_StdC_Read (wad_file_t *wad, unsigned int offset, void *buffer,
 wad_file_class_t stdc_wad_file = {
     W_StdC_OpenFile,
     W_StdC_CloseFile,
-
     W_StdC_Read,
 };

@@ -22,8 +22,6 @@
 #ifndef __Z_ZONE__
 #define __Z_ZONE__
 
-#include "doomsat_config.h"
-
 #include <stdio.h>
 
 //
@@ -49,12 +47,8 @@ enum
     PU_NUM_TAGS
 };
 
-// on doomstm these are provided by the host (rust binary)
 void Z_Init (void);
 void *Z_Malloc (int size, int tag, void *ptr);
-#if DOOMSAT_DOOMSTM
-unsigned int Z_AllocationSize (void *ptr);
-#endif
 void Z_Free (void *ptr);
 void Z_FreeTags (int lowtag, int hightag);
 void Z_DumpHeap (int lowtag, int hightag);

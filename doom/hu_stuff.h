@@ -54,7 +54,4 @@ void HU_Erase (void);
 
 extern char *chat_macros[10];
 
-struct doomsat_state;
-void HU_DoomsatGetMessage (struct doomsat_state *dst);
-void HU_DoomsatLoadMessage (struct doomsat_state *src);
 #endif

@@ -16,7 +16,6 @@
 // DESCRIPTION:
 //      Miscellaneous.
 //
-#include "doomsat_config.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -32,10 +31,8 @@
 #include <direct.h>
 #endif
 #else
-#if DOOMSAT_DOOMCLIENT
 #include <sys/stat.h>
 #include <sys/types.h>
-#endif
 #endif
 
 #include "doomtype.h"
@@ -50,7 +47,6 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
-#if DOOMSAT_DOOMCLIENT
 //
 // Create a directory
 //
@@ -194,53 +190,14 @@ M_TempFile (char *s)
 
     return M_StringJoin (tempdir, DIR_SEPARATOR_S, s, NULL);
 }
-#endif
-#if DOOMSAT_DOOMSTM
-void
-M_MakeDirectory (char *path)
-{
-}
-boolean
-M_FileExists (char *filename)
-{
-    return false;
-}
-long
-M_FileLength (FILE *handle)
-{
-    return 0;
-}
-boolean
-M_WriteFile (char *name, void *source, int length)
-{
-    return true;
-}
-int
-M_ReadFile (char *name, byte **buffer)
-{
-    return 0;
-}
-char *
-M_TempFile (char *s)
-{
-    return "/tmp";
-}
-#endif
 
 boolean
 M_StrToInt (const char *str, int *result)
 {
-#if DOOMSAT_DOOMCLIENT
     return sscanf (str, " 0x%x", result) == 1
            || sscanf (str, " 0X%x", result) == 1
            || sscanf (str, " 0%o", result) == 1
            || sscanf (str, " %d", result) == 1;
-#endif
-#if DOOMSAT_DOOMSTM
-    char *endptr;
-    *result = strtol (str, &endptr, 0);
-    return *endptr == '\0';
-#endif
 }
 
 void

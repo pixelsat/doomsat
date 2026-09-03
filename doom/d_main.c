@@ -27,7 +27,6 @@
 #include "config.h"
 #include "deh_main.h"
 #include "doomdef.h"
-#include "doomgeneric.h"
 #include "doomstat.h"
 
 #include "doomfeatures.h"
@@ -404,93 +403,18 @@ D_GrabMouseCallback (void)
 void
 doomgeneric_Tick ()
 {
+    // frame syncronous IO operations
+    I_StartFrame ();
+
     TryRunTics (); // will run at least one tic
-    // DG_DrawFrame();
 
-    static boolean viewactivestate = false;
-    static boolean menuactivestate = false;
-    static boolean inhelpscreensstate = false;
-    static boolean fullscreen = false;
-    static gamestate_t oldgamestate = -1;
-    static int borderdrawcount;
-    int nowtime;
-    int tics;
-    int wipestart;
-    int y;
-    boolean done;
-    boolean wipe;
-    boolean redrawsbar;
+    S_UpdateSounds (players[consoleplayer].mo); // move positional sounds
 
-    if (nodrawers)
-        return; // for comparative timing / profiling
-
-    redrawsbar = false;
-
-    // change the view size if needed
-    if (setsizeneeded)
+    // Update display, next frame, with current state.
+    if (screenvisible)
         {
-            R_ExecuteSetViewSize ();
-            oldgamestate = -1; // force background redraw
-            borderdrawcount = 3;
+            D_Display ();
         }
-
-    // save the current screen if about to wipe
-    if (gamestate != wipegamestate)
-        {
-            wipe = true;
-            wipe_StartScreen (0, 0, SCREENWIDTH, SCREENHEIGHT);
-        }
-    else
-        wipe = false;
-
-    if (gamestate == GS_LEVEL && gametic)
-        HU_Erase ();
-    // draw the view directly
-    if (gamestate == GS_LEVEL && !automapactive && gametic)
-        R_RenderPlayerView (&players[displayplayer]);
-
-    if (gamestate == GS_LEVEL && gametic)
-        HU_Drawer ();
-
-    if (gamestate == GS_LEVEL && gametic)
-        ST_Drawer (viewheight == 200, redrawsbar);
-
-    // clean up border stuff
-    if (gamestate != oldgamestate && gamestate != GS_LEVEL)
-        I_SetPalette (W_CacheLumpName (DEH_String ("PLAYPAL"), PU_CACHE));
-
-    // see if the border needs to be initially drawn
-    if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
-        {
-            viewactivestate = false; // view was not active
-            R_FillBackScreen ();     // draw the pattern into the back screen
-        }
-
-    // see if the border needs to be updated to the screen
-    if (gamestate == GS_LEVEL && !automapactive && scaledviewwidth != 320)
-        {
-            if (menuactive || menuactivestate || !viewactivestate)
-                borderdrawcount = 3;
-            if (borderdrawcount)
-                {
-                    R_DrawViewBorder (); // erase old menu stuff
-                    borderdrawcount--;
-                }
-        }
-
-    if (testcontrols)
-        {
-            // Box showing current mouse speed
-
-            V_DrawMouseSpeedBox (testcontrols_mousespeed);
-        }
-
-    menuactivestate = menuactive;
-    viewactivestate = viewactive;
-    inhelpscreensstate = inhelpscreens;
-    oldgamestate = wipegamestate = gamestate;
-
-    I_FinishUpdate ();
 }
 
 //
@@ -1892,13 +1816,11 @@ D_DoomMain (void)
     if (gamemode == commercial && W_CheckNumForName ("map01") < 0)
         storedemo = true;
 
-#if DOOMSAT_DOOMCLIENT
     if (M_CheckParmWithArgs ("-statdump", 1))
         {
             I_AtExit (StatDump, true);
             DEH_printf ("External statistics registered.\n");
         }
-#endif
 
     //!
     // @arg <x>

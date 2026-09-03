@@ -40,8 +40,6 @@ void P_SpawnSpecials (void);
 // every tic
 void P_UpdateSpecials (void);
 
-void P_UpdatePicAnimations (int animationtime);
-
 // when needed
 boolean P_UseSpecialLine (mobj_t *thing, line_t *line, int side);
 
@@ -341,7 +339,7 @@ typedef struct
     char	backFrame2[9];
     char	backFrame3[9];
     char	backFrame4[9];
-
+    
 } slidename_t;
 
 
@@ -362,7 +360,7 @@ typedef struct
 #define SWAITTICS 4
 
 // how many diff. types of anims
-#define MAXSLIDEDOORS 5
+#define MAXSLIDEDOORS 5                            
 
 void P_InitSlidingDoorFrames(void);
 

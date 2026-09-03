@@ -19,11 +19,9 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "doomdef.h"
 #include "doomkeys.h"
-#include "doomsat.h"
 #include "dstrings.h"
 
 #include "d_main.h"
@@ -402,8 +400,6 @@ menu_t SaveDef = { load_end, &MainDef, SaveMenu, M_DrawSave, 80, 54, 0 };
 void
 M_ReadSaveStrings (void)
 {
-// if stm, we just ... don't do anything lol
-#if DOOMSAT_DOOMCLIENT
     FILE *handle;
     int i;
     char name[256];
@@ -424,7 +420,6 @@ M_ReadSaveStrings (void)
             fclose (handle);
             LoadMenu[i].status = 1;
         }
-#endif
 }
 
 //
@@ -1991,104 +1986,4 @@ M_Init (void)
         }
 
     // opldev = M_CheckParm("-opldev") > 0;
-}
-
-enum doomsat_menu
-M_DoomsatWireMenu (void)
-{
-    if (currentMenu == &MainDef)
-        return DOOMSAT_MENU_MAIN;
-
-    if (currentMenu == &EpiDef)
-        return DOOMSAT_MENU_EPISODE;
-
-    if (currentMenu == &NewDef)
-        return DOOMSAT_MENU_SKILL;
-
-    if (currentMenu == &OptionsDef)
-        return DOOMSAT_MENU_OPTIONS;
-
-    if (currentMenu == &ReadDef1)
-        return DOOMSAT_MENU_HELP1;
-
-    if (currentMenu == &ReadDef2)
-        return DOOMSAT_MENU_HELP2;
-
-    if (currentMenu == &SoundDef)
-        return DOOMSAT_MENU_SOUND;
-
-    return DOOMSAT_MENU_NONE;
-}
-
-void
-M_DoomsatLoadMenu (enum doomsat_menu menu)
-{
-    switch (menu)
-        {
-        case DOOMSAT_MENU_NONE:
-        case DOOMSAT_MENU_MAIN:
-            currentMenu = &MainDef;
-            break;
-        case DOOMSAT_MENU_EPISODE:
-            currentMenu = &EpiDef;
-            break;
-        case DOOMSAT_MENU_SKILL:
-            currentMenu = &NewDef;
-            break;
-        case DOOMSAT_MENU_OPTIONS:
-            currentMenu = &OptionsDef;
-            break;
-        case DOOMSAT_MENU_HELP1:
-            currentMenu = &ReadDef1;
-            break;
-        case DOOMSAT_MENU_HELP2:
-            currentMenu = &ReadDef2;
-            break;
-        case DOOMSAT_MENU_SOUND:
-            currentMenu = &SoundDef;
-            break;
-        default:
-            break;
-        }
-}
-
-void
-M_DoomsatWireDialog (struct doomsat_state *state)
-{
-    size_t length = 0;
-
-    state->menu_itemOn = itemOn;
-    state->menu_whichSkull = whichSkull;
-    state->menu_messageToPrint = messageToPrint;
-    memset (state->menu_dialog, 0, sizeof (state->menu_dialog));
-
-    if (messageToPrint && messageString != NULL)
-        {
-            length = strlen (messageString);
-            if (length >= sizeof (state->menu_dialog))
-                length = sizeof (state->menu_dialog) - 1;
-            memcpy (state->menu_dialog, messageString, length);
-        }
-
-    state->menu_dialog_length = length;
-}
-
-void
-M_DoomsatLoadDialog (struct doomsat_state *state)
-{
-    static char dialog[sizeof (state->menu_dialog)];
-    int length = state->menu_dialog_length;
-
-    if (length < 0)
-        length = 0;
-    if (length >= sizeof (dialog))
-        length = sizeof (dialog) - 1;
-
-    memcpy (dialog, state->menu_dialog, length);
-    dialog[length] = '\0';
-
-    itemOn = state->menu_itemOn;
-    whichSkull = state->menu_whichSkull;
-    messageToPrint = state->menu_messageToPrint;
-    messageString = messageToPrint ? dialog : NULL;
 }

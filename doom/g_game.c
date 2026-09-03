@@ -742,11 +742,11 @@ G_Responder (event_t *ev)
 
     if (gamestate == GS_LEVEL)
         {
-#if 0
-	if (devparm && ev->type == ev_keydown && ev->data1 == ';')
-	{
-	    G_DeathMatchSpawnPlayer (0);
-	    return true;
+#if 0 
+	if (devparm && ev->type == ev_keydown && ev->data1 == ';') 
+	{ 
+	    G_DeathMatchSpawnPlayer (0); 
+	    return true; 
 	}
 #endif
             if (HU_Responder (ev))
@@ -1461,9 +1461,7 @@ G_DoCompleted (void)
     viewactive = false;
     automapactive = false;
 
-#if DOOMSAT_DOOMCLIENT
     StatCopy (&wminfo);
-#endif
 
     WI_Start (&wminfo);
 }
@@ -1528,8 +1526,6 @@ G_LoadGame (char *name)
 void
 G_DoLoadGame (void)
 {
-// if stm, we just ... don't do anything lol
-#if DOOMSAT_DOOMCLIENT
     int savedleveltime;
 
     gameaction = ga_nothing;
@@ -1572,7 +1568,6 @@ G_DoLoadGame (void)
 
     // draw the pattern into the back screen
     R_FillBackScreen ();
-#endif
 }
 
 //
@@ -1591,8 +1586,6 @@ G_SaveGame (int slot, char *description)
 void
 G_DoSaveGame (void)
 {
-// if stm, we just ... don't do anything lol
-#if DOOMSAT_DOOMCLIENT
     char *savegame_file;
     char *temp_savegame_file;
     char *recovery_savegame_file;
@@ -1667,7 +1660,6 @@ G_DoSaveGame (void)
 
     // draw the pattern into the back screen
     R_FillBackScreen ();
-#endif
 }
 
 //

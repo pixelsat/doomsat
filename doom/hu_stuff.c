@@ -20,7 +20,6 @@
 #include "doomdef.h"
 #include "doomkeys.h"
 
-#include "doomsat.h"
 #include "z_zone.h"
 
 #include "deh_main.h"
@@ -520,37 +519,4 @@ HU_Responder (event_t *ev)
         }
 
     return eatkey;
-}
-
-void
-HU_DoomsatGetMessage (struct doomsat_state *dst)
-{
-    hu_textline_t *line = &w_message.l[w_message.cl];
-    int length = line->len;
-
-    if (length > 80)
-        length = 80;
-
-    dst->hud_message_on = message_on;
-    dst->hud_message_line_length = length;
-
-    memset (dst->text, 0, sizeof (dst->text));
-    memcpy (dst->text, line->l, length);
-}
-
-void
-HU_DoomsatLoadMessage (struct doomsat_state *src)
-{
-    hu_textline_t *line = &w_message.l[w_message.cl];
-    int length = src->hud_message_line_length;
-
-    if (length > HU_MAXLINELENGTH)
-        length = HU_MAXLINELENGTH;
-
-    memcpy (line->l, src->text, length);
-    line->l[length] = '\0';
-    line->len = length;
-    line->needsupdate = 4;
-
-    message_on = src->hud_message_on;
 }

@@ -22,7 +22,6 @@
 
 #include "doomdef.h"
 #include "doomkeys.h"
-#include "doomsat.h"
 #include "p_local.h"
 #include "st_stuff.h"
 #include "w_wad.h"
@@ -1362,53 +1361,4 @@ AM_Drawer (void)
     AM_drawMarks ();
 
     V_MarkRect (f_x, f_y, f_w, f_h);
-}
-
-void
-AM_DoomsatInitRenderer (void)
-{
-    static boolean initialized = false;
-
-    fb = I_VideoBuffer;
-    f_x = f_y = 0;
-    f_w = finit_width;
-    f_h = finit_height;
-    plr = &players[displayplayer];
-
-    if (!initialized)
-        {
-            AM_loadPics ();
-            initialized = true;
-        }
-}
-
-void
-AM_DoomsatGetState (struct doomsat_state *state)
-{
-    state->automap_m_x = m_x;
-    state->automap_m_y = m_y;
-    state->automap_m_w = m_w;
-    state->automap_m_h = m_h;
-    state->automap_scale_mtof = scale_mtof;
-    state->automap_grid = grid;
-    state->automap_cheating = cheating;
-    state->automap_lightlev = lightlev;
-    memcpy (state->automap_markpoints, markpoints, sizeof (markpoints));
-}
-void
-AM_DoomsatLoadState (struct doomsat_state *state)
-{
-    m_x = state->automap_m_x;
-    m_y = state->automap_m_y;
-    m_w = state->automap_m_w;
-    m_h = state->automap_m_h;
-    scale_mtof = state->automap_scale_mtof;
-    m_x2 = m_x + m_w;
-    m_y2 = m_y + m_h;
-    scale_ftom = FixedDiv (FRACUNIT, scale_mtof);
-    grid = state->automap_grid;
-    cheating = state->automap_cheating;
-    lightlev = state->automap_lightlev;
-    memcpy (markpoints, state->automap_markpoints,
-            sizeof (state->automap_markpoints));
 }

@@ -20,10 +20,8 @@
 
 #include "config.h"
 
-#include "doomsat.h"
 #include "doomtype.h"
 #include "m_argv.h"
-#include "z_zone.h"
 
 #include "w_file.h"
 
@@ -51,57 +49,10 @@ static wad_file_class_t *wad_file_classes[] = {
     &stdc_wad_file,
 };
 
-#if DOOMSAT_DOOMSTM
-static size_t
-W_Memory_Read (wad_file_t *wad, unsigned int offset, void *buffer,
-               size_t buffer_len)
-{
-    size_t available;
-
-    if (offset >= wad->length)
-        {
-            return 0;
-        }
-
-    available = wad->length - offset;
-
-    if (buffer_len > available)
-        {
-            buffer_len = available;
-        }
-
-    memcpy (buffer, wad->mapped + offset, buffer_len);
-    return buffer_len;
-}
-static void
-W_Memory_CloseFile (wad_file_t *wad)
-{
-    Z_Free (wad);
-}
-
-static wad_file_class_t memory_wad_file = {
-    .OpenFile = NULL,
-    .CloseFile = W_Memory_CloseFile,
-    .Read = W_Memory_Read,
-};
-#endif
-
 wad_file_t *
 W_OpenFile (char *path)
 {
-    wad_file_t *result = NULL;
-#if DOOMSAT_DOOMSTM
-    if (strcmp (path, "doomsat.wad") == 0)
-        {
-            result = Z_Malloc (sizeof (wad_file_t), PU_STATIC, NULL);
-
-            result->file_class = &memory_wad_file;
-            result->mapped = doomsat_wad_data;
-            result->length = doomsat_wad_length;
-            return result;
-        }
-#endif
-#if DOOMSAT_DOOMCLIENT
+    wad_file_t *result;
     int i;
 
     //!
@@ -129,7 +80,6 @@ W_OpenFile (char *path)
         }
 
     return result;
-#endif
 }
 
 void

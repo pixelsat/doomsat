@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 
-#include "doomsat.h"
 #include "z_zone.h"
 
 #include "m_misc.h"
@@ -1799,51 +1798,4 @@ WI_Start (wbstartstruct_t *wbstartstruct)
         WI_initNetgameStats ();
     else
         WI_initStats ();
-}
-
-void
-WI_DoomsatGetState (struct doomsat_state *ds)
-{
-    ds->wi_state = state;
-    ds->wi_epsd = wbs->epsd;
-    ds->wi_didsecret = wbs->didsecret;
-    ds->wi_last = wbs->last;
-    ds->wi_next = wbs->next;
-
-    ds->wi_cnt_kills = cnt_kills[0];
-    ds->wi_cnt_items = cnt_items[0];
-    ds->wi_cnt_secret = cnt_secret[0];
-
-    ds->wi_cnt_time = cnt_time;
-    ds->wi_cnt_par = cnt_par;
-    ds->wi_snl_pointeron = snl_pointeron;
-    for (int i = 0; i < NUMANIMS[wbs->epsd]; i++)
-        {
-            ds->wi_anim_ctr[i] = anims[ds->wi_epsd][i].ctr;
-        }
-}
-
-void
-WI_DoomsatLoadState (struct doomsat_state *ds)
-{
-    // otherwise wbs = NULL
-    wbs = &wminfo;
-
-    state = ds->wi_state;
-    wbs->epsd = ds->wi_epsd;
-    wbs->didsecret = ds->wi_didsecret;
-    wbs->last = ds->wi_last;
-    wbs->next = ds->wi_next;
-
-    cnt_kills[0] = ds->wi_cnt_kills;
-    cnt_items[0] = ds->wi_cnt_items;
-    cnt_secret[0] = ds->wi_cnt_secret;
-
-    cnt_time = ds->wi_cnt_time;
-    cnt_par = ds->wi_cnt_par;
-    snl_pointeron = ds->wi_snl_pointeron;
-    for (int i = 0; i < NUMANIMS[wbs->epsd]; i++)
-        {
-            anims[ds->wi_epsd][i].ctr = ds->wi_anim_ctr[i];
-        }
 }
