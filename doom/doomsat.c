@@ -226,10 +226,13 @@ doomsat_GetState (void)
     else
         M_StringCopy (state.pagename, pagename, sizeof (state.pagename));
 
-    state.viewx = viewx;
-    state.viewy = viewy;
-    state.viewz = viewz;
-    state.viewangle = viewangle;
+    if (player->mo != NULL)
+        {
+            state.viewx = player->mo->x;
+            state.viewy = player->mo->y;
+            state.viewz = player->viewz;
+            state.viewangle = player->mo->angle;
+        }
 
     state.player_viewz = player->viewz;
     state.player_extralight = player->extralight;
@@ -440,7 +443,8 @@ doomsat_LoadState (struct doomsat_state state)
 
     for (int i = 0; i < numlines; ++i)
         {
-            lines[i].flags = state.lines[i].flags;
+            lines[i].flags
+                = state.lines[i].flags | (lines[i].flags & ML_MAPPED);
         }
 
     for (int i = 0; i < numsectors; ++i)

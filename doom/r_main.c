@@ -676,6 +676,7 @@ R_ExecuteSetViewSize (void)
     R_InitTextureMapping ();
 
     // psprite scales
+    #if !DOOMSAT_DOOMSTM
     pspritescale = FRACUNIT * viewwidth / SCREENWIDTH;
     pspriteiscale = FRACUNIT * SCREENWIDTH / viewwidth;
 
@@ -697,6 +698,7 @@ R_ExecuteSetViewSize (void)
             cosadj = abs (finecosine[xtoviewangle[i] >> ANGLETOFINESHIFT]);
             distscale[i] = FixedDiv (FRACUNIT, cosadj);
         }
+    #endif
 
     // Calculate the light levels to use
     //  for each level / scale combination.
@@ -737,7 +739,9 @@ R_Init (void)
     printf (".");
 
     R_SetViewSize (screenblocks, detailLevel);
+    #if !DOOMSAT_DOOMSTM
     R_InitPlanes ();
+    #endif
     printf (".");
     R_InitLightTables ();
     printf (".");
@@ -819,6 +823,7 @@ R_SetupFrame (player_t *player)
 void
 R_RenderPlayerView (player_t *player)
 {
+    #if !DOOMSAT_DOOMSTM
     R_SetupFrame (player);
 
     // Clear buffers.
@@ -845,4 +850,5 @@ R_RenderPlayerView (player_t *player)
 
     // Check for new console commands.
     NetUpdate ();
+    #endif
 }

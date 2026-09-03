@@ -14,8 +14,8 @@ struct __FILE
 
 typedef struct __FILE FILE;
 
-FILE *stdout;
-FILE *stderr;
+extern FILE *stdout;
+extern FILE *stderr;
 
 void DG_putc_stdout (int ch);
 void DG_putc_stderr (int ch);

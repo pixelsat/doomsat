@@ -493,6 +493,7 @@ R_InitTextures (void)
     numtextures = numtextures1 + numtextures2;
 
     textures = Z_Malloc (numtextures * sizeof (*textures), PU_STATIC, 0);
+#if !DOOMSAT_DOOMSTM
     texturecolumnlump
         = Z_Malloc (numtextures * sizeof (*texturecolumnlump), PU_STATIC, 0);
     texturecolumnofs
@@ -501,6 +502,7 @@ R_InitTextures (void)
         = Z_Malloc (numtextures * sizeof (*texturecomposite), PU_STATIC, 0);
     texturecompositesize = Z_Malloc (
         numtextures * sizeof (*texturecompositesize), PU_STATIC, 0);
+#endif
     texturewidthmask
         = Z_Malloc (numtextures * sizeof (*texturewidthmask), PU_STATIC, 0);
     textureheight
@@ -572,10 +574,12 @@ R_InitTextures (void)
                                 texture->name);
                         }
                 }
+#if !DOOMSAT_DOOMSTM
             texturecolumnlump[i] = Z_Malloc (
                 texture->width * sizeof (**texturecolumnlump), PU_STATIC, 0);
             texturecolumnofs[i] = Z_Malloc (
                 texture->width * sizeof (**texturecolumnofs), PU_STATIC, 0);
+#endif
 
             j = 1;
             while (j * 2 <= texture->width)
@@ -595,8 +599,10 @@ R_InitTextures (void)
 
     // Precalculate whatever possible.
 
+#if !DOOMSAT_DOOMSTM
     for (i = 0; i < numtextures; i++)
         R_GenerateLookup (i);
+#endif
 
     // Create translation table for global animation.
     texturetranslation = Z_Malloc (
@@ -644,6 +650,7 @@ R_InitSpriteLumps (void)
     lastspritelump = W_GetNumForName (DEH_String ("S_END")) - 1;
 
     numspritelumps = lastspritelump - firstspritelump + 1;
+#if !DOOMSAT_DOOMSTM
     spritewidth
         = Z_Malloc (numspritelumps * sizeof (*spritewidth), PU_STATIC, 0);
     spriteoffset
@@ -661,6 +668,7 @@ R_InitSpriteLumps (void)
             spriteoffset[i] = SHORT (patch->leftoffset) << FRACBITS;
             spritetopoffset[i] = SHORT (patch->topoffset) << FRACBITS;
         }
+#endif
 }
 
 //
@@ -776,6 +784,7 @@ int spritememory;
 void
 R_PrecacheLevel (void)
 {
+#if !DOOMSAT_DOOMSTM
     char *flatpresent;
     char *texturepresent;
     char *spritepresent;
@@ -882,4 +891,5 @@ R_PrecacheLevel (void)
         }
 
     Z_Free (spritepresent);
+#endif
 }

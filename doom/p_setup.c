@@ -836,5 +836,7 @@ P_Init (void)
 {
     P_InitSwitchList ();
     P_InitPicAnims ();
+#if !DOOMSAT_DOOMSTM
     R_InitSprites (sprnames);
+#endif
 }

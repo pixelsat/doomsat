@@ -56,7 +56,7 @@ void *Z_Malloc (int size, int tag, void *ptr);
 #endif
 #if DOOMSAT_DOOMSTM
 void *Z_DGMalloc (int size, int tag, void *ptr);
-void *Z_DGDGMalloc (int size, int tag, void *ptr, char* file, int line) {
+static inline void *Z_DGDGMalloc (int size, int tag, void *ptr, char* file, int line) {
     // log allocations of >10kib
     if (size > 10 * 1024) { printf("[%s:%d] allocating %d bytes\n", file, line, size); } \
     return Z_DGMalloc(size, tag, ptr);

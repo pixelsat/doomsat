@@ -1332,7 +1332,11 @@ void
 ST_Init (void)
 {
     ST_loadData ();
+#if DOOMSAT_DOOMSTM
+    st_backing_screen = NULL;
+#else
     st_backing_screen = (byte *)Z_Malloc (ST_WIDTH * ST_HEIGHT, PU_STATIC, 0);
+#endif
 }
 
 void
